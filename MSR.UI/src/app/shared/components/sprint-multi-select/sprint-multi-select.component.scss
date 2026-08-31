@@ -1,0 +1,100 @@
+.multi-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  .inline-label {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--color-navy);
+    white-space: nowrap;
+  }
+
+  .control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-width: 190px;
+    padding: 10px 12px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    svg { color: var(--color-text-muted); transition: transform 0.15s ease; }
+
+    &.open,
+    &:hover {
+      border-color: var(--color-primary);
+    }
+    &.open {
+      box-shadow: 0 0 0 3px var(--color-primary-soft);
+      svg { transform: rotate(180deg); }
+    }
+  }
+
+  .summary {
+    font-size: var(--fs-base);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 30;
+    width: 230px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-2);
+  }
+
+  .options-scroll {
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-base);
+    cursor: pointer;
+
+    &:hover { background: var(--color-surface-alt); }
+
+    input { accent-color: var(--color-primary); width: 15px; height: 15px; }
+    &.select-all { font-weight: 600; color: var(--color-navy); }
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: var(--space-2) 0;
+  }
+
+  .clear-btn {
+    width: 100%;
+    text-align: center;
+    background: transparent;
+    border: none;
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: var(--fs-sm);
+    padding: 6px;
+    border-radius: var(--radius-sm);
+
+    &:hover { background: var(--color-primary-soft); }
+  }
+}

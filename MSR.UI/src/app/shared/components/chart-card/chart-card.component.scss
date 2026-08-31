@@ -1,0 +1,62 @@
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5);
+  height: 100%;
+
+  .chart-header {
+    margin-bottom: var(--space-2);
+
+    h3 {
+      font-size: var(--fs-base);
+      font-weight: 700;
+      color: var(--color-navy);
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .index { color: var(--color-primary); }
+    .subtitle {
+      font-size: var(--fs-xs);
+      font-weight: 500;
+      color: var(--color-text-muted);
+    }
+  }
+
+  .chart-body {
+    flex: 1;
+    min-height: 240px;
+  }
+
+  // Internal horizontal scroll for dense category charts (e.g. many employees).
+  // Keeps overflow inside the card; never causes page-level horizontal scroll.
+  .chart-scroll {
+    min-width: 0;
+
+    &.scrollable {
+      overflow-x: auto;
+      overflow-y: hidden;
+
+      &::-webkit-scrollbar { height: 8px; }
+      &::-webkit-scrollbar-thumb {
+        background: var(--color-border-strong);
+        border-radius: 8px;
+      }
+      &::-webkit-scrollbar-track { background: transparent; }
+    }
+
+    &.scrollable-y {
+      max-height: 340px;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      &::-webkit-scrollbar { width: 8px; }
+      &::-webkit-scrollbar-thumb {
+        background: var(--color-border-strong);
+        border-radius: 8px;
+      }
+      &::-webkit-scrollbar-track { background: transparent; }
+    }
+  }
+}

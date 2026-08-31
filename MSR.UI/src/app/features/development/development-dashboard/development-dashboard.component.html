@@ -1,0 +1,126 @@
+<div class="page dashboard">
+  <a class="back-link" routerLink="/">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M11 18l-6-6 6-6"></path>
+    </svg>
+    Monthly Sprint Review
+  </a>
+
+  <header class="report-header">
+    <h1>Development MSR Report</h1>
+    <p>Monthly Sprint Review - Sprint Performance</p>
+  </header>
+
+  <!-- Common Product filter -->
+  <div class="card product-bar">
+    <app-product-selector
+      [products]="products"
+      [selectedId]="selectedProductId"
+      (selectedIdChange)="onProductChange($event)">
+    </app-product-selector>
+  </div>
+
+  <!-- KPI Summary -->
+  <app-dashboard-section title="KPI Summary" [index]="1">
+    <div filter class="kpi-filter">
+      <span class="inline-label">KPI Filter</span>
+      <app-sprint-multi-select
+        [selected]="selectedKpiSprints"
+        (selectedChange)="onKpiSprintsChange($event)">
+      </app-sprint-multi-select>
+    </div>
+
+    <app-loading-state *ngIf="kpiState === 'loading'" message="Loading KPIs…"></app-loading-state>
+    <app-error-state *ngIf="kpiState === 'error'" (retry)="loadKpis()"></app-error-state>
+    <app-empty-state
+      *ngIf="kpiState === 'empty'"
+      message="No KPI data available for the selected sprint(s).">
+    </app-empty-state>
+
+    <div class="kpi-grid" *ngIf="kpiState === 'ready' && kpi">
+      <app-kpi-card label="Capacity" [value]="kpi.capacity" [unavailable]="kpi.capacity === null" theme="blue">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </app-kpi-card>
+      <app-kpi-card label="Velocity" [value]="kpi.velocity" [unavailable]="kpi.velocity === null" theme="purple">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"></path></svg>
+      </app-kpi-card>
+      <app-kpi-card label="Assigned Points" [value]="kpi.assignedPoints" [unavailable]="kpi.assignedPoints === null" theme="blue">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
+      </app-kpi-card>
+      <app-kpi-card label="Delivered Points" [value]="kpi.deliveredPoints" [unavailable]="kpi.deliveredPoints === null" theme="green">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      </app-kpi-card>
+      <app-kpi-card label="Rollovers" [value]="kpi.rollovers" [unavailable]="kpi.rollovers === null" theme="orange">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+      </app-kpi-card>
+      <app-kpi-card label="Rollover Points" [value]="kpi.rolloverPoints" [unavailable]="kpi.rolloverPoints === null" theme="orange">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+      </app-kpi-card>
+      <app-kpi-card label="Planned Items" [value]="kpi.plannedItems" [unavailable]="kpi.plannedItems === null" theme="blue">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="13" y2="17"></line></svg>
+      </app-kpi-card>
+      <app-kpi-card label="Delivered Items" [value]="kpi.deliveredItems" [unavailable]="kpi.deliveredItems === null" theme="green">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+      </app-kpi-card>
+      <app-kpi-card label="Completion %" [value]="kpi.completionPercentage" [unavailable]="kpi.completionPercentage === null" [isPercentage]="true" theme="teal">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+      </app-kpi-card>
+    </div>
+  </app-dashboard-section>
+
+  <!-- Performance Report -->
+  <app-dashboard-section title="Performance Report" [index]="2">
+    <div filter class="range-filter">
+      <span class="inline-label">Sprint Range</span>
+      <app-sprint-range-selector
+        [ranges]="ranges"
+        [selectedIndex]="selectedRangeIndex"
+        (rangeChange)="onRangeChange($event)">
+      </app-sprint-range-selector>
+    </div>
+
+    <div class="chart-grid">
+      <!-- 1. Velocity Trends Across Sprints -->
+      <app-chart-card class="span-6" [index]="1" title="Velocity Trends Across Sprints"
+        [state]="velocity.state" [options]="velocity.options" [chartHeight]="260"
+        (retry)="loadCharts()"></app-chart-card>
+
+      <!-- 3. Rollovers Trends Across Sprints -->
+      <app-chart-card class="span-6" [index]="3" title="Rollovers Trends Across Sprints"
+        [state]="rollover.state" [options]="rollover.options" [chartHeight]="260"
+        (retry)="loadCharts()"></app-chart-card>
+
+      <!-- 2. Team wise Actual vs Trailing Velocity (panels) -->
+      <app-chart-panel-grid class="span-6" [index]="2" title="Team wise Actual vs Trailing Velocity"
+        [state]="teamVelocity.state" [panels]="teamVelocity.panels" [legend]="teamVelocity.legend"
+        [panelMinWidth]="240" (retry)="loadCharts()"></app-chart-panel-grid>
+
+      <!-- 5. Team wise Rollovers Trends Across Sprints -->
+      <app-chart-card class="span-6" [index]="5" title="Team wise Rollovers Trends Across Sprints"
+        [state]="teamRollover.state" [options]="teamRollover.options" [chartHeight]="260"
+        (retry)="loadCharts()"></app-chart-card>
+
+      <!-- 4. Team wise Committed vs Completed in Completion % (panels) -->
+      <app-chart-panel-grid class="span-6" [index]="4" title="Team wise Committed vs Completed in Completion %"
+        [state]="teamCompletion.state" [panels]="teamCompletion.panels" [legend]="teamCompletion.legend"
+        [panelMinWidth]="260" (retry)="loadCharts()"></app-chart-panel-grid>
+
+      <!-- 6. Actual Velocity vs Head Count (panels) -->
+      <app-chart-panel-grid class="span-6" [index]="6" title="Actual Velocity vs Head Count (Last 4 Sprints)"
+        [state]="velocityHeadcount.state" [panels]="velocityHeadcount.panels" [legend]="velocityHeadcount.legend"
+        [panelMinWidth]="260" (retry)="loadCharts()"></app-chart-panel-grid>
+
+      <!-- 7. Resource Wise Actual vs Trailing Velocity Trends (dense panels) -->
+      <app-chart-panel-grid class="span-8" [index]="7" title="Resource Wise Actual vs Trailing Velocity Trends"
+        [state]="resourceVelocity.state" [panels]="resourceVelocity.panels" [legend]="resourceVelocity.legend"
+        [panelMinWidth]="220" (retry)="loadCharts()"></app-chart-panel-grid>
+
+      <!-- 8. Resource Completion Trends -->
+      <app-chart-card class="span-4" [index]="8" title="Resource Completion Trends"
+        [state]="resourceCompletion.state" [options]="resourceCompletion.options" [chartHeight]="320"
+        [scrollMinWidth]="resourceCompletionMinWidth"
+        (retry)="loadCharts()"></app-chart-card>
+    </div>
+  </app-dashboard-section>
+</div>

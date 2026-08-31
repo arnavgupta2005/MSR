@@ -1,0 +1,168 @@
+@use 'styles/tokens';
+
+// ============================================================
+// Global base styles
+// ============================================================
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--fs-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5 {
+  margin: 0;
+  color: var(--color-navy);
+  font-weight: 700;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+// ---- Reusable layout helpers ----
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-12);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+// ---- Report page header ----
+.report-header {
+  text-align: center;
+  margin-bottom: var(--space-6);
+
+  h1 {
+    font-size: var(--fs-2xl);
+    color: var(--color-navy);
+    letter-spacing: -0.5px;
+  }
+
+  p {
+    margin: var(--space-2) 0 0;
+    color: var(--color-navy-soft);
+    font-size: var(--fs-md);
+    font-weight: 500;
+  }
+}
+
+.section-title {
+  font-size: var(--fs-lg);
+  color: var(--color-navy);
+  font-weight: 700;
+}
+
+// ---- Native select styling (professional) ----
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: 10px 36px 10px 14px;
+  font-size: var(--fs-base);
+  color: var(--color-text);
+  min-width: 200px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+  }
+}
+
+.field-label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-navy);
+  margin-bottom: var(--space-2);
+}
+
+// ---- Power BI-style ApexCharts tooltip ----
+.pbi-tooltip {
+  padding: 8px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #1e293b;
+  min-width: 140px;
+}
+
+.pbi-group {
+  font-weight: 700;
+  font-size: 12px;
+  color: #0f2545;
+  margin-bottom: 2px;
+}
+
+.pbi-sprint {
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.pbi-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.pbi-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.pbi-name {
+  flex: 1 1 auto;
+  color: #475569;
+}
+
+.pbi-val {
+  font-weight: 700;
+  color: #0f2545;
+}
+
+// Compact variant (used for dense resource panels).
+.pbi-tooltip.pbi-compact {
+  padding: 5px 7px;
+  font-size: 10.5px;
+  min-width: 110px;
+
+  .pbi-group { font-size: 10.5px; margin-bottom: 1px; }
+  .pbi-sprint { margin-bottom: 3px; }
+  .pbi-row { gap: 4px; padding: 1px 0; }
+  .pbi-dot { width: 7px; height: 7px; }
+}

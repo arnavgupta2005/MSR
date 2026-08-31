@@ -1,0 +1,87 @@
+// ============================================================
+// Shared dashboard layout styles (Development + QA)
+// ============================================================
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-5);
+  transition: color 0.15s ease;
+
+  &:hover { color: var(--color-primary); }
+}
+
+.product-bar {
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+
+  // Compact product dropdown — sized to content, not full width.
+  .form-select {
+    min-width: 220px;
+    max-width: 260px;
+    width: auto;
+  }
+}
+
+.inline-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-navy);
+  white-space: nowrap;
+}
+
+.kpi-filter,
+.range-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+// 9 KPI cards — responsive auto-fit, never overflow.
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: var(--space-3);
+}
+
+// Adaptive 12-column chart grid. Cards declare spans; complex
+// visualizations get more space. No page-level horizontal overflow.
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+
+  > * { min-width: 0; }
+
+  .span-4  { grid-column: span 4; }
+  .span-6  { grid-column: span 6; }
+  .span-8  { grid-column: span 8; }
+  .span-12 { grid-column: span 12; }
+}
+
+@media (max-width: 1400px) {
+  .kpi-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+@media (max-width: 1200px) {
+  .chart-grid {
+    .span-4, .span-8 { grid-column: span 6; }
+  }
+}
+
+@media (max-width: 900px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .chart-grid {
+    grid-template-columns: 1fr;
+    .span-4, .span-6, .span-8, .span-12 { grid-column: 1 / -1; }
+  }
+}
+
+@media (max-width: 520px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}

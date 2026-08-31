@@ -1,0 +1,84 @@
+.panel-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5);
+  height: 100%;
+  min-width: 0;
+
+  .panel-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+
+    h3 {
+      font-size: var(--fs-base);
+      font-weight: 700;
+      color: var(--color-navy);
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .index { color: var(--color-primary); }
+  }
+
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--color-text-muted);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  }
+
+  .panel-card-body { flex: 1; min-width: 0; }
+}
+
+// Internal scroll grid of small-multiple tiles.
+.panel-scroll {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--panel-min, 240px), 1fr));
+  gap: var(--space-4);
+  max-height: 520px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: var(--space-2);
+
+  // Subtle scrollbar
+  &::-webkit-scrollbar { width: 8px; height: 8px; }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 8px;
+  }
+  &::-webkit-scrollbar-track { background: transparent; }
+}
+
+.panel-tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--color-surface-alt);
+
+  .panel-tile-title {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    color: var(--color-navy);
+    margin-bottom: var(--space-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

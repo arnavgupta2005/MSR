@@ -1,0 +1,69 @@
+// ============================================================
+// MSR.UI — Design Tokens
+// Single source of truth for colors, spacing, radius, shadows,
+// typography and borders used across the enterprise dashboards.
+// ============================================================
+
+:root {
+  // ---- Brand / accent colors ----
+  --color-primary: #2563eb;        // restrained blue accent
+  --color-primary-dark: #1d4ed8;
+  --color-primary-soft: #eff4ff;   // soft blue background
+  --color-navy: #0f2545;           // dark navy headings
+  --color-navy-soft: #64748b;      // muted subtitle text
+
+  // ---- Semantic accents (report themes) ----
+  --color-dev: #2563eb;
+  --color-qa: #16a34a;
+  --color-feature: #ea8a2b;
+
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  --color-warning: #ea8a2b;
+  --color-purple: #7c3aed;
+  --color-teal: #0ea5b5;
+
+  // ---- Surfaces ----
+  --color-bg: #f4f7fb;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f8fafc;
+  --color-border: #e5e9f0;
+  --color-border-strong: #d3dae6;
+
+  // ---- Text ----
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --color-text-faint: #94a3b8;
+
+  // ---- Spacing scale ----
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  // ---- Radius ----
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  // ---- Shadows ----
+  --shadow-sm: 0 1px 2px rgba(15, 37, 69, 0.06);
+  --shadow-md: 0 4px 16px rgba(15, 37, 69, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 37, 69, 0.12);
+
+  // ---- Typography ----
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 14px;
+  --fs-md: 16px;
+  --fs-lg: 20px;
+  --fs-xl: 26px;
+  --fs-2xl: 34px;
+}

@@ -1,0 +1,6 @@
+@MSR.API_HostAddress = http://localhost:5117
+
+GET {{MSR.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

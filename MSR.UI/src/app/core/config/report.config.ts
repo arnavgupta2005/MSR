@@ -68,3 +68,12 @@ export const SPRINT_RANGE_OPTIONS: SprintRangeOption[] = [
 
 // Default range shown on first load (matches reference images).
 export const DEFAULT_SPRINT_RANGE = SPRINT_RANGE_OPTIONS[3]; // Sprint 10 - 13
+
+// ---- Custom Performance Report sprint filter ----
+// Users pick specific sprints (not a contiguous range). Bounded to keep the
+// per-sprint charts readable.
+export const MAX_PERFORMANCE_SPRINTS = 5;
+export const MIN_PERFORMANCE_SPRINTS = 1;
+
+// Default sprints selected on first load (mirrors the old Sprint 10 - 13 range).
+export const DEFAULT_PERFORMANCE_SPRINTS: number[] = [10, 11, 12, 13];

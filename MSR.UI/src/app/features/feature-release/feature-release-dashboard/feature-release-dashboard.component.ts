@@ -8,6 +8,7 @@ import { FEATURE_PRODUCTS } from '../../../core/config/report.config';
 import { FeatureRelease } from '../../../core/models/api-models';
 import { FeatureReleaseService } from '../../../core/services/feature-release.service';
 
+import { SprintMultiSelectComponent } from '../../../shared/components/sprint-multi-select/sprint-multi-select.component';
 import { LoadingStateComponent } from '../../../shared/components/loading-state/loading-state.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
@@ -20,6 +21,7 @@ type LoadState = 'loading' | 'ready' | 'empty' | 'error';
   imports: [
     CommonModule,
     RouterLink,
+    SprintMultiSelectComponent,
     LoadingStateComponent,
     EmptyStateComponent,
     ErrorStateComponent
@@ -36,6 +38,10 @@ export class FeatureReleaseDashboardComponent implements OnInit {
   state: LoadState = 'loading';
   rows: FeatureRelease[] = [];
 
+  // Custom sprint filters. Empty selection = no constraint from that filter.
+  selectedPlanned: number[] = [];
+  selectedActual: number[] = [];
+
   ngOnInit(): void {
     this.load();
   }
@@ -45,8 +51,28 @@ export class FeatureReleaseDashboardComponent implements OnInit {
     this.load();
   }
 
+  onPlannedChange(sprints: number[]): void {
+    this.selectedPlanned = sprints;
+  }
+
+  onActualChange(sprints: number[]): void {
+    this.selectedActual = sprints;
+  }
+
   get heading(): string {
     return `${this.selectedProduct} Feature Release`;
+  }
+
+  // Union of the two selections: rows whose planned sprint is selected OR whose
+  // actual sprint is selected. When both filters are empty, show all rows.
+  get filteredRows(): FeatureRelease[] {
+    if (this.selectedPlanned.length === 0 && this.selectedActual.length === 0) {
+      return this.rows;
+    }
+    return this.rows.filter(r =>
+      (r.plannedSprint !== null && this.selectedPlanned.includes(r.plannedSprint)) ||
+      (r.releasedSprint !== null && this.selectedActual.includes(r.releasedSprint))
+    );
   }
 
   load(): void {

@@ -134,18 +134,25 @@ export function panelsByGroup<T extends { sprintNumber: number }>(
  * Pivot flat rows into stacked-bar series: one row-category per group
  * (e.g. employee) and one series per sprint. Missing values become 0 so the
  * stacked segments align. Preserves each sprint's actual value (no averaging).
+ * Groups are ordered by their total value so the horizontal bars render in
+ * descending order (largest total at the top).
  */
 export function stackBySprint<T extends { sprintNumber: number }>(
   rows: T[],
   groupKey: (r: T) => string,
   valueKey: (r: T) => number
 ): { categories: string[]; series: Series[] } {
-  const groups = Array.from(new Set(rows.map(groupKey)));
   const sprints = distinctSprints(rows);
   const lookup = new Map<string, number>();
+  const totals = new Map<string, number>();
   for (const r of rows) {
-    lookup.set(`${groupKey(r)}|${r.sprintNumber}`, valueKey(r));
+    const g = groupKey(r);
+    const v = valueKey(r);
+    lookup.set(`${g}|${r.sprintNumber}`, v);
+    totals.set(g, (totals.get(g) ?? 0) + v);
   }
+  const groups = Array.from(new Set(rows.map(groupKey)))
+    .sort((a, b) => (totals.get(b) ?? 0) - (totals.get(a) ?? 0));
   const series: Series[] = sprints.map(sp => ({
     name: `Sprint ${sp}`,
     data: groups.map(g => lookup.get(`${g}|${sp}`) ?? 0)

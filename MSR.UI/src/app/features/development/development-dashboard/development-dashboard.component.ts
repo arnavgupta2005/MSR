@@ -6,16 +6,14 @@ import { catchError } from 'rxjs/operators';
 
 import {
   DEVELOPMENT_PRODUCTS,
-  DEFAULT_SPRINT_RANGE,
-  SPRINT_RANGE_OPTIONS,
-  SprintRangeOption
+  DEFAULT_PERFORMANCE_SPRINTS,
+  MAX_PERFORMANCE_SPRINTS
 } from '../../../core/config/report.config';
 import { SprintPerformanceKpi } from '../../../core/models/api-models';
 import { SprintPerformanceService } from '../../../core/services/sprint-performance.service';
 
 import { ProductSelectorComponent } from '../../../shared/components/product-selector/product-selector.component';
 import { SprintMultiSelectComponent } from '../../../shared/components/sprint-multi-select/sprint-multi-select.component';
-import { SprintRangeSelectorComponent } from '../../../shared/components/sprint-range-selector/sprint-range-selector.component';
 import { DashboardSectionComponent } from '../../../shared/components/dashboard-section/dashboard-section.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { LoadingStateComponent } from '../../../shared/components/loading-state/loading-state.component';
@@ -67,7 +65,6 @@ interface PanelVm {
     RouterLink,
     ProductSelectorComponent,
     SprintMultiSelectComponent,
-    SprintRangeSelectorComponent,
     DashboardSectionComponent,
     KpiCardComponent,
     LoadingStateComponent,
@@ -83,13 +80,12 @@ export class DevelopmentDashboardComponent implements OnInit {
   private readonly service = inject(SprintPerformanceService);
 
   readonly products = DEVELOPMENT_PRODUCTS;
-  readonly ranges = SPRINT_RANGE_OPTIONS;
+  readonly maxPerfSprints = MAX_PERFORMANCE_SPRINTS;
 
   // ---- state ----
   selectedProductId = DEVELOPMENT_PRODUCTS[0].id;
   selectedKpiSprints: number[] = [10];
-  selectedRange: SprintRangeOption = DEFAULT_SPRINT_RANGE;
-  selectedRangeIndex = SPRINT_RANGE_OPTIONS.indexOf(DEFAULT_SPRINT_RANGE);
+  selectedPerfSprints: number[] = [...DEFAULT_PERFORMANCE_SPRINTS];
 
   // ---- KPI ----
   kpiState: LoadState = 'loading';
@@ -126,8 +122,8 @@ export class DevelopmentDashboardComponent implements OnInit {
     this.loadKpis();
   }
 
-  onRangeChange(range: SprintRangeOption): void {
-    this.selectedRange = range;
+  onPerfSprintsChange(sprints: number[]): void {
+    this.selectedPerfSprints = sprints;
     this.loadCharts();
   }
 
@@ -167,12 +163,17 @@ export class DevelopmentDashboardComponent implements OnInit {
   // ============================================================
   loadCharts(): void {
     const id = this.selectedProductId;
-    const { startSprint: s, endSprint: e } = this.selectedRange;
+    const sprints = this.selectedPerfSprints;
+
+    if (sprints.length === 0) {
+      this.setAllEmpty();
+      return;
+    }
 
     this.setAllLoading();
 
     // 1. Velocity Trends Across Sprints — Actual + Trailing Velocity
-    this.service.getVelocityTrends(id, s, e)
+    this.service.getVelocityTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.velocity = { state: 'error', options: null }; return; }
@@ -193,7 +194,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       });
 
     // 2. Team wise Actual vs Trailing Velocity — per-team panels (Actual, Capacity, Trailing)
-    this.service.getTeamVelocityTrends(id, s, e)
+    this.service.getTeamVelocityTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.teamVelocity = { state: 'error', panels: [], legend: [] }; return; }
@@ -219,7 +220,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       });
 
     // 3. Rollovers Trends Across Sprints — Rollover Points
-    this.service.getRolloverTrends(id, s, e)
+    this.service.getRolloverTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.rollover = { state: 'error', options: null }; return; }
@@ -236,7 +237,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       });
 
     // 4. Team wise Committed vs Completed in Completion % — per-team combo panels
-    this.service.getTeamCompletionTrends(id, s, e)
+    this.service.getTeamCompletionTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.teamCompletion = { state: 'error', panels: [], legend: [] }; return; }
@@ -249,9 +250,9 @@ export class DevelopmentDashboardComponent implements OnInit {
         this.teamCompletion = {
           state: 'ready',
           legend: [
-            { name: 'Committed Points', color: '#93c5fd' },
-            { name: 'Completed Points', color: '#2563eb' },
-            { name: 'Completion %', color: '#ea8a2b' }
+            { name: 'Completion %', color: '#93c5fd' },
+            { name: 'Committed Points', color: '#ea8a2b' },
+            { name: 'Completed Points', color: '#16a34a' }
           ],
           panels: grouped.map(g => ({
             title: g.group,
@@ -265,7 +266,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       });
 
     // 5. Team wise Rollovers Trends Across Sprints — multi-series line (one per team)
-    this.service.getTeamRolloverTrends(id, s, e)
+    this.service.getTeamRolloverTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.teamRollover = { state: 'error', options: null }; return; }
@@ -280,7 +281,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       });
 
     // 6. Actual Velocity vs Head Count (Last 4 Sprints) — per-team panels
-    this.service.getActualVelocityVsHeadcount(id, s, e)
+    this.service.getActualVelocityVsHeadcount(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.velocityHeadcount = { state: 'error', panels: [], legend: [] }; return; }
@@ -304,7 +305,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       });
 
     // 7. Resource Wise Actual vs Trailing Velocity Trends — per-employee panels
-    this.service.getResourceVelocityTrends(id, s, e)
+    this.service.getResourceVelocityTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.resourceVelocity = { state: 'error', panels: [], legend: [] }; return; }
@@ -332,7 +333,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       });
 
     // 8. Resource Completion Trends — multi-series line (one per employee)
-    this.service.getResourceCompletion(id, s, e)
+    this.service.getResourceCompletion(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.resourceCompletion = { state: 'error', options: null }; return; }
@@ -358,5 +359,16 @@ export class DevelopmentDashboardComponent implements OnInit {
     this.teamCompletion = { state: 'loading', panels: [], legend: [] };
     this.velocityHeadcount = { state: 'loading', panels: [], legend: [] };
     this.resourceVelocity = { state: 'loading', panels: [], legend: [] };
+  }
+
+  private setAllEmpty(): void {
+    this.velocity = { state: 'empty', options: null };
+    this.rollover = { state: 'empty', options: null };
+    this.teamRollover = { state: 'empty', options: null };
+    this.resourceCompletion = { state: 'empty', options: null };
+    this.teamVelocity = { state: 'empty', panels: [], legend: [] };
+    this.teamCompletion = { state: 'empty', panels: [], legend: [] };
+    this.velocityHeadcount = { state: 'empty', panels: [], legend: [] };
+    this.resourceVelocity = { state: 'empty', panels: [], legend: [] };
   }
 }

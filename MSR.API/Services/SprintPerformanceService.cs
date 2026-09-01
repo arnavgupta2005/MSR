@@ -80,8 +80,7 @@ namespace MSR.API.Services
                 .Where(x =>
                     x.ProductAreaId == filter.ProductAreaId &&
                     x.Sprint != null &&
-                    x.Sprint.SprintNumber >= filter.StartSprintNumber &&
-                    x.Sprint.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(x.Sprint.SprintNumber))
                 .GroupBy(x => new
                 {
                     x.SprintId,
@@ -112,8 +111,7 @@ namespace MSR.API.Services
                     x.ProductAreaId == filter.ProductAreaId &&
                     x.Sprint != null &&
                     x.Team != null &&
-                    x.Sprint.SprintNumber >= filter.StartSprintNumber &&
-                    x.Sprint.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(x.Sprint.SprintNumber))
                 .GroupBy(x => new
                 {
                     x.TeamId,
@@ -149,8 +147,7 @@ namespace MSR.API.Services
                     x.ProductAreaId == filter.ProductAreaId &&
                     x.Sprint != null &&
                     x.Team != null &&
-                    x.Sprint.SprintNumber >= filter.StartSprintNumber &&
-                    x.Sprint.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(x.Sprint.SprintNumber))
                 .GroupBy(x => new
                 {
                     x.TeamId,
@@ -184,8 +181,7 @@ namespace MSR.API.Services
                 x.ProductAreaId == filter.ProductAreaId &&
 
                     x.Sprint != null &&
-                    x.Sprint.SprintNumber >= filter.StartSprintNumber &&
-                    x.Sprint.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(x.Sprint.SprintNumber))
                 .GroupBy(x => new
                 {
                     x.SprintId,
@@ -217,8 +213,7 @@ namespace MSR.API.Services
                     x.Sprint != null &&
                     x.Employee != null &&
                     x.Team != null &&
-                    x.Sprint.SprintNumber >= filter.StartSprintNumber &&
-                    x.Sprint.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(x.Sprint.SprintNumber))
                 .GroupBy(x => new
                 {
                     x.EmployeeId,
@@ -260,8 +255,7 @@ namespace MSR.API.Services
                 x.ProductAreaId == filter.ProductAreaId &&
                     x.Sprint != null &&
                     x.Team != null &&
-                    x.Sprint.SprintNumber >= filter.StartSprintNumber &&
-                    x.Sprint.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(x.Sprint.SprintNumber))
                 .GroupBy(x => new
                 {
                     x.TeamId,
@@ -297,8 +291,7 @@ namespace MSR.API.Services
                 x.ProductAreaId == filter.ProductAreaId &&
                     x.Sprint != null &&
                     x.Team != null &&
-                    x.Sprint.SprintNumber >= filter.StartSprintNumber &&
-                    x.Sprint.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(x.Sprint.SprintNumber))
                 .GroupBy(x => new
                 {
                     x.TeamId,
@@ -349,8 +342,7 @@ namespace MSR.API.Services
                     x.Sprint != null &&
                     x.Employee != null &&
                     x.Team != null &&
-                    x.Sprint.SprintNumber >= filter.StartSprintNumber &&
-                    x.Sprint.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(x.Sprint.SprintNumber))
                 .GroupBy(x => new
                 {
                     x.EmployeeId,

@@ -26,6 +26,23 @@
   <div class="card table-card">
     <h2 class="table-heading">{{ heading }}</h2>
 
+    <div class="feature-filters" *ngIf="state === 'ready'">
+      <div class="filter-group">
+        <span class="field-label">Planned Release Sprint</span>
+        <app-sprint-multi-select
+          [selected]="selectedPlanned"
+          (selectedChange)="onPlannedChange($event)">
+        </app-sprint-multi-select>
+      </div>
+      <div class="filter-group">
+        <span class="field-label">Actual Release Sprint</span>
+        <app-sprint-multi-select
+          [selected]="selectedActual"
+          (selectedChange)="onActualChange($event)">
+        </app-sprint-multi-select>
+      </div>
+    </div>
+
     <app-loading-state *ngIf="state === 'loading'" message="Loading feature releases…" [height]="220"></app-loading-state>
     <app-error-state *ngIf="state === 'error'" [height]="220" (retry)="load()"></app-error-state>
     <app-empty-state
@@ -35,7 +52,13 @@
     </app-empty-state>
 
     <div class="table-wrap" *ngIf="state === 'ready'">
-      <table class="feature-table">
+      <app-empty-state
+        *ngIf="filteredRows.length === 0"
+        [height]="180"
+        message="No feature releases match the selected sprint filters.">
+      </app-empty-state>
+
+      <table class="feature-table" *ngIf="filteredRows.length > 0">
         <thead>
           <tr>
             <th>Feature Description</th>
@@ -45,7 +68,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of rows">
+          <tr *ngFor="let r of filteredRows">
             <td class="desc">{{ r.featureDescription }}</td>
             <td>{{ sprintLabel(r.plannedSprint) }}</td>
             <td>{{ sprintLabel(r.releasedSprint) }}</td>

@@ -284,13 +284,13 @@ export function buildComboCompletionChart(
 ): ChartOptions {
   return {
     series: [
-      { name: 'Committed Points', type: 'column', data: committed },
-      { name: 'Completed Points', type: 'column', data: completed },
-      { name: 'Completion %', type: 'line', data: completionPct }
+      { name: 'Completion %', type: 'column', data: completionPct },
+      { name: 'Committed Points', type: 'line', data: committed },
+      { name: 'Completed Points', type: 'line', data: completed }
     ] as any,
     chart: { ...baseChart(height, 'line'), stacked: false } as any,
-    colors: ['#93c5fd', '#2563eb', '#ea8a2b'],
-    stroke: { width: [0, 0, 3], curve: 'smooth' },
+    colors: ['#93c5fd', '#ea8a2b', '#16a34a'],
+    stroke: { width: [0, 3, 3], curve: 'smooth' },
     plotOptions: { bar: { columnWidth: '55%', borderRadius: 2 } },
     markers: { size: 3, strokeWidth: 0 },
     dataLabels: { enabled: false },
@@ -301,12 +301,15 @@ export function buildComboCompletionChart(
       axisTicks: { color: GRID_COLOR }
     },
     yaxis: [
-      { seriesName: 'Committed Points', labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '10px' } } },
-      { seriesName: 'Completed Points', show: false },
       {
-        seriesName: 'Completion %', opposite: true, min: 0, max: 100,
+        seriesName: 'Completion %', min: 0, max: 100,
         labels: { formatter: (v: number) => `${Math.round(v)}%`, style: { colors: AXIS_LABEL_COLOR, fontSize: '10px' } }
-      }
+      },
+      {
+        seriesName: 'Committed Points', opposite: true, min: 0,
+        labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '10px' } }
+      },
+      { seriesName: 'Completed Points', opposite: true, min: 0, show: false }
     ] as any,
     grid: baseGrid,
     legend: { show: false },

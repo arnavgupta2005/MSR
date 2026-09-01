@@ -76,6 +76,21 @@
 
     input { accent-color: var(--color-primary); width: 15px; height: 15px; }
     &.select-all { font-weight: 600; color: var(--color-navy); }
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      &:hover { background: transparent; }
+      input { cursor: not-allowed; }
+    }
+  }
+
+  .limit-hint {
+    margin: 0 0 var(--space-2);
+    padding: 4px 10px;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--color-text-muted);
   }
 
   .divider {

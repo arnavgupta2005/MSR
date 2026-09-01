@@ -45,6 +45,7 @@ export interface ChartPanel {
         <app-empty-state *ngIf="state === 'empty'" [height]="220" [message]="emptyMessage"></app-empty-state>
 
         <div class="panel-scroll" *ngIf="state === 'ready'"
+             [class.horizontal]="horizontal"
              [style.--panel-min.px]="panelMinWidth">
           <div class="panel-tile" *ngFor="let p of panels">
             <span class="panel-tile-title" [title]="p.title">{{ p.title }}</span>
@@ -78,6 +79,8 @@ export class ChartPanelGridComponent {
   @Input() legend: { name: string; color: string }[] = [];
   @Input() span: 1 | 2 = 2;
   @Input() panelMinWidth = 240;
+  /** When true, tiles lay out in 2 rows and scroll horizontally (2x2 view). */
+  @Input() horizontal = false;
   @Input() emptyMessage = 'No data available for the selected range.';
   @Output() retry = new EventEmitter<void>();
 }

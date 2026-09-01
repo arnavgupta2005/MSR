@@ -38,22 +38,22 @@
     </app-empty-state>
 
     <div class="kpi-grid" *ngIf="kpiState === 'ready' && kpi">
-      <app-kpi-card label="Total Stories" [value]="kpi.totalStories" unit="Total" theme="blue">
+      <app-kpi-card label="User Stories" [value]="kpi.totalStories" theme="blue">
         <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
       </app-kpi-card>
-      <app-kpi-card label="QA Capacity" [value]="kpi.capacity" unit="Story Points" theme="green">
+      <app-kpi-card label="QA Capacity" [value]="kpi.capacity" theme="green">
         <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
       </app-kpi-card>
-      <app-kpi-card label="Total Story Points" [value]="kpi.totalStoryPoints" unit="Points" theme="orange">
+      <app-kpi-card label="Total Story Points" [value]="kpi.totalStoryPoints" theme="orange">
         <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
       </app-kpi-card>
-      <app-kpi-card label="Rollovers" [value]="kpi.rollovers" unit="Total" theme="purple">
+      <app-kpi-card label="QA Rollover" [value]="kpi.rollovers" theme="purple">
         <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
       </app-kpi-card>
-      <app-kpi-card label="Rollover Points" [value]="kpi.rolloverPoints" unit="Points" theme="teal">
+      <app-kpi-card label="QA Rollover Points" [value]="kpi.rolloverPoints" theme="teal">
         <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
       </app-kpi-card>
-      <app-kpi-card label="Observations" [value]="kpi.observations" unit="Total" theme="red">
+      <app-kpi-card label="Observations" [value]="kpi.observations" theme="red">
         <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path></svg>
       </app-kpi-card>
     </div>
@@ -62,12 +62,12 @@
   <!-- Performance Report -->
   <app-dashboard-section title="Performance Report" [index]="2">
     <div filter class="range-filter">
-      <span class="inline-label">Sprint Range</span>
-      <app-sprint-range-selector
-        [ranges]="ranges"
-        [selectedIndex]="selectedRangeIndex"
-        (rangeChange)="onRangeChange($event)">
-      </app-sprint-range-selector>
+      <span class="inline-label">Sprint Filter</span>
+      <app-sprint-multi-select
+        [selected]="selectedPerfSprints"
+        [max]="maxPerfSprints"
+        (selectedChange)="onPerfSprintsChange($event)">
+      </app-sprint-multi-select>
     </div>
 
     <div class="chart-grid qa-charts">

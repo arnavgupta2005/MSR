@@ -61,6 +61,20 @@
     border-radius: 8px;
   }
   &::-webkit-scrollbar-track { background: transparent; }
+
+  // Horizontal 2x2 variant: two fixed rows, columns flow to the right and the
+  // grid scrolls horizontally. Exactly two tiles are visible per view.
+  &.horizontal {
+    grid-template-columns: none;
+    grid-template-rows: auto auto;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - var(--space-4)) / 2);
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-right: 0;
+    padding-bottom: var(--space-2);
+  }
 }
 
 .panel-tile {

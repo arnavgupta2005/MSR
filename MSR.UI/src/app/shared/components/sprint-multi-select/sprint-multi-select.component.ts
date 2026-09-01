@@ -18,16 +18,19 @@ import { SPRINT_OPTIONS, SprintOption } from '../../../core/config/report.config
       </div>
 
       <div class="panel" *ngIf="open">
-        <label class="option select-all">
+        <p *ngIf="max > 0" class="limit-hint">Select up to {{ max }} sprints</p>
+        <label class="option select-all" *ngIf="max === 0">
           <input type="checkbox" [checked]="allSelected" (change)="toggleAll()" />
           <span>Select All</span>
         </label>
-        <div class="divider"></div>
+        <div class="divider" *ngIf="max === 0"></div>
         <div class="options-scroll">
-          <label class="option" *ngFor="let s of sprints">
+          <label class="option" *ngFor="let s of sprints"
+                 [class.disabled]="isDisabled(s.sprintNumber)">
             <input
               type="checkbox"
               [checked]="isSelected(s.sprintNumber)"
+              [disabled]="isDisabled(s.sprintNumber)"
               (change)="toggleSprint(s.sprintNumber)" />
             <span>{{ s.label }}</span>
           </label>
@@ -43,9 +46,19 @@ export class SprintMultiSelectComponent {
   @Input() sprints: SprintOption[] = SPRINT_OPTIONS;
   @Input() selected: number[] = [];
   @Input() label = '';
+  /** Maximum selectable sprints. 0 = unlimited. */
+  @Input() max = 0;
   @Output() selectedChange = new EventEmitter<number[]>();
 
   open = false;
+
+  get limitReached(): boolean {
+    return this.max > 0 && this.selected.length >= this.max;
+  }
+
+  isDisabled(n: number): boolean {
+    return this.limitReached && !this.isSelected(n);
+  }
 
   get allSelected(): boolean {
     return this.selected.length === this.sprints.length && this.sprints.length > 0;
@@ -73,6 +86,7 @@ export class SprintMultiSelectComponent {
   }
 
   toggleSprint(n: number): void {
+    if (this.isDisabled(n)) { return; }
     const next = this.isSelected(n)
       ? this.selected.filter(x => x !== n)
       : [...this.selected, n].sort((a, b) => a - b);

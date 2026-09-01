@@ -4,8 +4,6 @@
     {
         public int ProductAreaId { get; set; }
 
-        public int StartSprintNumber { get; set; }
-
-        public int EndSprintNumber { get; set; }
+        public List<int> SprintNumbers { get; set; } = [];
     }
 }

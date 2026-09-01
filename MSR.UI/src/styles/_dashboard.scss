@@ -64,6 +64,17 @@
   .span-12 { grid-column: span 12; }
 }
 
+// Vertical stack of a panel grid and its paired chart (one directly below
+// the other), used inside the 12-column chart grid.
+.chart-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+
+  > * { display: block; min-width: 0; }
+}
+
 @media (max-width: 1400px) {
   .kpi-grid { grid-template-columns: repeat(5, 1fr); }
 }

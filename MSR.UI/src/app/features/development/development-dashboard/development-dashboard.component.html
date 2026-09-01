@@ -72,12 +72,12 @@
   <!-- Performance Report -->
   <app-dashboard-section title="Performance Report" [index]="2">
     <div filter class="range-filter">
-      <span class="inline-label">Sprint Range</span>
-      <app-sprint-range-selector
-        [ranges]="ranges"
-        [selectedIndex]="selectedRangeIndex"
-        (rangeChange)="onRangeChange($event)">
-      </app-sprint-range-selector>
+      <span class="inline-label">Sprint Filter</span>
+      <app-sprint-multi-select
+        [selected]="selectedPerfSprints"
+        [max]="maxPerfSprints"
+        (selectedChange)="onPerfSprintsChange($event)">
+      </app-sprint-multi-select>
     </div>
 
     <div class="chart-grid">
@@ -86,41 +86,42 @@
         [state]="velocity.state" [options]="velocity.options" [chartHeight]="260"
         (retry)="loadCharts()"></app-chart-card>
 
-      <!-- 3. Rollovers Trends Across Sprints -->
-      <app-chart-card class="span-6" [index]="3" title="Rollovers Trends Across Sprints"
+      <!-- 2. Rollovers Trends Across Sprints -->
+      <app-chart-card class="span-6" [index]="2" title="Rollovers Trends Across Sprints"
         [state]="rollover.state" [options]="rollover.options" [chartHeight]="260"
         (retry)="loadCharts()"></app-chart-card>
 
-      <!-- 2. Team wise Actual vs Trailing Velocity (panels) -->
-      <app-chart-panel-grid class="span-6" [index]="2" title="Team wise Actual vs Trailing Velocity"
+      <!-- 3. Team wise Actual vs Trailing Velocity (full width, 2x2 horizontal) -->
+      <app-chart-panel-grid class="span-12" [index]="3" title="Team wise Actual vs Trailing Velocity"
         [state]="teamVelocity.state" [panels]="teamVelocity.panels" [legend]="teamVelocity.legend"
-        [panelMinWidth]="240" (retry)="loadCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="240" [horizontal]="true" (retry)="loadCharts()"></app-chart-panel-grid>
 
-      <!-- 5. Team wise Rollovers Trends Across Sprints -->
-      <app-chart-card class="span-6" [index]="5" title="Team wise Rollovers Trends Across Sprints"
+      <!-- 4. Team wise Committed vs Completed in Completion % (below 3, full width) -->
+      <app-chart-panel-grid class="span-12" [index]="4" title="Team wise Committed vs Completed in Completion %"
+        [state]="teamCompletion.state" [panels]="teamCompletion.panels" [legend]="teamCompletion.legend"
+        [panelMinWidth]="260" [horizontal]="true" (retry)="loadCharts()"></app-chart-panel-grid>
+
+      <!-- 5. Team wise Rollovers Trends Across Sprints (full width) -->
+      <app-chart-card class="span-12" [index]="5" title="Team wise Rollovers Trends Across Sprints"
         [state]="teamRollover.state" [options]="teamRollover.options" [chartHeight]="260"
         (retry)="loadCharts()"></app-chart-card>
 
-      <!-- 4. Team wise Committed vs Completed in Completion % (panels) -->
-      <app-chart-panel-grid class="span-6" [index]="4" title="Team wise Committed vs Completed in Completion %"
-        [state]="teamCompletion.state" [panels]="teamCompletion.panels" [legend]="teamCompletion.legend"
-        [panelMinWidth]="260" (retry)="loadCharts()"></app-chart-panel-grid>
-
-      <!-- 6. Actual Velocity vs Head Count (panels) -->
-      <app-chart-panel-grid class="span-6" [index]="6" title="Actual Velocity vs Head Count (Last 4 Sprints)"
+      <!-- 6. Actual Velocity vs Head Count (below 5, full width, 2x2 horizontal) -->
+      <app-chart-panel-grid class="span-12" [index]="6" title="Actual Velocity vs Head Count"
         [state]="velocityHeadcount.state" [panels]="velocityHeadcount.panels" [legend]="velocityHeadcount.legend"
-        [panelMinWidth]="260" (retry)="loadCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="260" [horizontal]="true" (retry)="loadCharts()"></app-chart-panel-grid>
 
-      <!-- 7. Resource Wise Actual vs Trailing Velocity Trends (dense panels) -->
-      <app-chart-panel-grid class="span-8" [index]="7" title="Resource Wise Actual vs Trailing Velocity Trends"
-        [state]="resourceVelocity.state" [panels]="resourceVelocity.panels" [legend]="resourceVelocity.legend"
-        [panelMinWidth]="220" (retry)="loadCharts()"></app-chart-panel-grid>
+      <!-- Stack: 7. Resource Wise Actual vs Trailing Velocity Trends  ->  8. Resource Completion Trends -->
+      <div class="chart-stack span-12">
+        <app-chart-panel-grid [index]="7" title="Resource Wise Actual vs Trailing Velocity Trends"
+          [state]="resourceVelocity.state" [panels]="resourceVelocity.panels" [legend]="resourceVelocity.legend"
+          [panelMinWidth]="220" [horizontal]="true" (retry)="loadCharts()"></app-chart-panel-grid>
 
-      <!-- 8. Resource Completion Trends -->
-      <app-chart-card class="span-4" [index]="8" title="Resource Completion Trends"
-        [state]="resourceCompletion.state" [options]="resourceCompletion.options" [chartHeight]="320"
-        [scrollMinWidth]="resourceCompletionMinWidth"
-        (retry)="loadCharts()"></app-chart-card>
+        <app-chart-card [index]="8" title="Resource Completion Trends"
+          [state]="resourceCompletion.state" [options]="resourceCompletion.options" [chartHeight]="320"
+          [scrollMinWidth]="resourceCompletionMinWidth"
+          (retry)="loadCharts()"></app-chart-card>
+      </div>
     </div>
   </app-dashboard-section>
 </div>

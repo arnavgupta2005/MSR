@@ -6,16 +6,14 @@ import { catchError } from 'rxjs/operators';
 
 import {
   QA_PRODUCTS,
-  DEFAULT_SPRINT_RANGE,
-  SPRINT_RANGE_OPTIONS,
-  SprintRangeOption
+  DEFAULT_PERFORMANCE_SPRINTS,
+  MAX_PERFORMANCE_SPRINTS
 } from '../../../core/config/report.config';
 import { QaKpi } from '../../../core/models/api-models';
 import { QaService } from '../../../core/services/qa.service';
 
 import { ProductSelectorComponent } from '../../../shared/components/product-selector/product-selector.component';
 import { SprintMultiSelectComponent } from '../../../shared/components/sprint-multi-select/sprint-multi-select.component';
-import { SprintRangeSelectorComponent } from '../../../shared/components/sprint-range-selector/sprint-range-selector.component';
 import { DashboardSectionComponent } from '../../../shared/components/dashboard-section/dashboard-section.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { LoadingStateComponent } from '../../../shared/components/loading-state/loading-state.component';
@@ -49,7 +47,6 @@ interface ChartVm {
     RouterLink,
     ProductSelectorComponent,
     SprintMultiSelectComponent,
-    SprintRangeSelectorComponent,
     DashboardSectionComponent,
     KpiCardComponent,
     LoadingStateComponent,
@@ -64,12 +61,11 @@ export class QaDashboardComponent implements OnInit {
   private readonly service = inject(QaService);
 
   readonly products = QA_PRODUCTS;
-  readonly ranges = SPRINT_RANGE_OPTIONS;
+  readonly maxPerfSprints = MAX_PERFORMANCE_SPRINTS;
 
   selectedProductId = QA_PRODUCTS[0].id;
   selectedKpiSprints: number[] = [10];
-  selectedRange: SprintRangeOption = DEFAULT_SPRINT_RANGE;
-  selectedRangeIndex = SPRINT_RANGE_OPTIONS.indexOf(DEFAULT_SPRINT_RANGE);
+  selectedPerfSprints: number[] = [...DEFAULT_PERFORMANCE_SPRINTS];
 
   kpiState: LoadState = 'loading';
   kpi: QaKpi | null = null;
@@ -98,8 +94,8 @@ export class QaDashboardComponent implements OnInit {
     this.loadKpis();
   }
 
-  onRangeChange(range: SprintRangeOption): void {
-    this.selectedRange = range;
+  onPerfSprintsChange(sprints: number[]): void {
+    this.selectedPerfSprints = sprints;
     this.loadCharts();
   }
 
@@ -122,14 +118,21 @@ export class QaDashboardComponent implements OnInit {
 
   loadCharts(): void {
     const id = this.selectedProductId;
-    const { startSprint: s, endSprint: e } = this.selectedRange;
+    const sprints = this.selectedPerfSprints;
+
+    if (sprints.length === 0) {
+      this.rollover = { state: 'empty', options: null };
+      this.storyPoints = { state: 'empty', options: null };
+      this.delivery = { state: 'empty', options: null };
+      return;
+    }
 
     this.rollover = { state: 'loading', options: null };
     this.storyPoints = { state: 'loading', options: null };
     this.delivery = { state: 'loading', options: null };
 
     // 1. QA Rollover Trend (line)
-    this.service.getRolloverTrends(id, s, e)
+    this.service.getRolloverTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.rollover = { state: 'error', options: null }; return; }
@@ -146,7 +149,7 @@ export class QaDashboardComponent implements OnInit {
       });
 
     // 2. Story Points Tested — QA wise (horizontal stacked bars, one segment per sprint)
-    this.service.getStoryPointsTested(id, s, e)
+    this.service.getStoryPointsTested(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.storyPoints = { state: 'error', options: null }; return; }
@@ -170,7 +173,7 @@ export class QaDashboardComponent implements OnInit {
       });
 
     // 3. Daily Delivery Trend (one line per selected sprint — no aggregation)
-    this.service.getDeliveryTrend(id, s, e)
+    this.service.getDeliveryTrend(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.delivery = { state: 'error', options: null }; return; }

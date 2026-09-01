@@ -18,28 +18,29 @@ export class QaService {
     return this.http.get<QaKpi>(`${this.baseUrl}/kpis`, { params });
   }
 
-  private rangeParams(productAreaId: number, startSprint: number, endSprint: number): HttpParams {
-    return new HttpParams()
-      .set('ProductAreaId', productAreaId)
-      .set('StartSprintNumber', startSprint)
-      .set('EndSprintNumber', endSprint);
+  private sprintParams(productAreaId: number, sprintNumbers: number[]): HttpParams {
+    let params = new HttpParams().set('ProductAreaId', productAreaId);
+    for (const n of sprintNumbers) {
+      params = params.append('SprintNumbers', n);
+    }
+    return params;
   }
 
-  getRolloverTrends(productAreaId: number, start: number, end: number): Observable<QaRolloverTrend[]> {
+  getRolloverTrends(productAreaId: number, sprints: number[]): Observable<QaRolloverTrend[]> {
     return this.http.get<QaRolloverTrend[]>(`${this.baseUrl}/rollover-trends`, {
-      params: this.rangeParams(productAreaId, start, end)
+      params: this.sprintParams(productAreaId, sprints)
     });
   }
 
-  getStoryPointsTested(productAreaId: number, start: number, end: number): Observable<QaStoryPointsTested[]> {
+  getStoryPointsTested(productAreaId: number, sprints: number[]): Observable<QaStoryPointsTested[]> {
     return this.http.get<QaStoryPointsTested[]>(`${this.baseUrl}/story-points-tested`, {
-      params: this.rangeParams(productAreaId, start, end)
+      params: this.sprintParams(productAreaId, sprints)
     });
   }
 
-  getDeliveryTrend(productAreaId: number, start: number, end: number): Observable<QaDeliveryTrend[]> {
+  getDeliveryTrend(productAreaId: number, sprints: number[]): Observable<QaDeliveryTrend[]> {
     return this.http.get<QaDeliveryTrend[]>(`${this.baseUrl}/delivery-trend`, {
-      params: this.rangeParams(productAreaId, start, end)
+      params: this.sprintParams(productAreaId, sprints)
     });
   }
 }

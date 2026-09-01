@@ -62,8 +62,7 @@ namespace MSR.API.Services
             return await _context.QAPerformances
                 .Where(q =>
                     q.ProductAreaId == filter.ProductAreaId &&
-                    q.Sprint!.SprintNumber >= filter.StartSprintNumber &&
-                    q.Sprint!.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(q.Sprint!.SprintNumber))
                 .GroupBy(q => new
                 {
                     q.SprintId,
@@ -89,8 +88,7 @@ namespace MSR.API.Services
             return await _context.QAPerformances
                 .Where(q =>
                     q.ProductAreaId == filter.ProductAreaId &&
-                    q.Sprint!.SprintNumber >= filter.StartSprintNumber &&
-                    q.Sprint!.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(q.Sprint!.SprintNumber))
                 .Select(q => new QAStoryPointsTestedDto
                 {
                     SprintId = q.SprintId,
@@ -116,8 +114,7 @@ namespace MSR.API.Services
             return await _context.QADailyDeliveries
                 .Where(q =>
                     q.ProductAreaId == filter.ProductAreaId &&
-                    q.Sprint!.SprintNumber >= filter.StartSprintNumber &&
-                    q.Sprint!.SprintNumber <= filter.EndSprintNumber)
+                    filter.SprintNumbers.Contains(q.Sprint!.SprintNumber))
                 .Select(q => new QADeliveryTrendDto
                 {
                     SprintId = q.SprintId,

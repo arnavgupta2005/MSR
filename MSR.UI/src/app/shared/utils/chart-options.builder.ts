@@ -303,10 +303,12 @@ export function buildComboCompletionChart(
     yaxis: [
       {
         seriesName: 'Completion %', min: 0, max: 100,
+        title: { text: 'Completion %', style: { color: AXIS_LABEL_COLOR, fontSize: '10px', fontWeight: 600 } },
         labels: { formatter: (v: number) => `${Math.round(v)}%`, style: { colors: AXIS_LABEL_COLOR, fontSize: '10px' } }
       },
       {
         seriesName: 'Committed Points', opposite: true, min: 0,
+        title: { text: 'Story Points', style: { color: AXIS_LABEL_COLOR, fontSize: '10px', fontWeight: 600 } },
         labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '10px' } }
       },
       { seriesName: 'Completed Points', opposite: true, min: 0, show: false }

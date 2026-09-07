@@ -280,7 +280,8 @@ export function buildComboCompletionChart(
   completed: (number | null)[],
   completionPct: (number | null)[],
   height = 170,
-  headerGroup = ''
+  headerGroup = '',
+  pointsMax?: number
 ): ChartOptions {
   return {
     series: [
@@ -307,11 +308,11 @@ export function buildComboCompletionChart(
         labels: { formatter: (v: number) => `${Math.round(v)}%`, style: { colors: AXIS_LABEL_COLOR, fontSize: '10px' } }
       },
       {
-        seriesName: 'Committed Points', opposite: true, min: 0,
+        seriesName: 'Committed Points', opposite: true, min: 0, max: pointsMax, forceNiceScale: true,
         title: { text: 'Story Points', style: { color: AXIS_LABEL_COLOR, fontSize: '10px', fontWeight: 600 } },
         labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '10px' } }
       },
-      { seriesName: 'Completed Points', opposite: true, min: 0, show: false }
+      { seriesName: 'Completed Points', opposite: true, min: 0, max: pointsMax, show: false }
     ] as any,
     grid: baseGrid,
     legend: { show: false },

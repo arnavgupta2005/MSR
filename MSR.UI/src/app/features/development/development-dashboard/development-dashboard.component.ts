@@ -247,6 +247,10 @@ export class DevelopmentDashboardComponent implements OnInit {
           { name: 'Completed Points', value: r => r.deliveredPoints },
           { name: 'Completion %', value: r => Math.round(r.completionPercentage * 100) / 100 }
         ]);
+        // Shared Story Points axis max across all team panels, rounded up to
+        // the next multiple of 20 so every panel uses identical right-axis ticks.
+        const maxPoints = Math.max(0, ...rows.map(r => Math.max(r.assignedPoints, r.deliveredPoints)));
+        const pointsMax = Math.max(20, Math.ceil(maxPoints / 20) * 20);
         this.teamCompletion = {
           state: 'ready',
           legend: [
@@ -259,7 +263,7 @@ export class DevelopmentDashboardComponent implements OnInit {
             options: buildComboCompletionChart(
               g.sprints.map(sp => `Sprint ${sp}`),
               g.series[0].data, g.series[1].data, g.series[2].data,
-              170, g.group
+              170, g.group, pointsMax
             )
           }))
         };

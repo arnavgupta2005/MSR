@@ -25,5 +25,11 @@ export const routes: Routes = [
       import('./features/feature-release/feature-release-dashboard/feature-release-dashboard.component')
         .then(m => m.FeatureReleaseDashboardComponent)
   },
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./features/admin/admin-import/admin-import.component')
+        .then(m => m.AdminImportComponent)
+  },
   { path: '**', redirectTo: '' }
 ];

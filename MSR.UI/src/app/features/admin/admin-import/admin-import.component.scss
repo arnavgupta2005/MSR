@@ -1,0 +1,59 @@
+@use '../../../../styles/dashboard';
+
+.import-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  &.disabled {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+.import-hint {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.file-field input[type='file'] {
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+}
+
+.result-summary {
+  margin-top: var(--space-2);
+  font-weight: 600;
+}
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+
+  h3 { font-size: var(--fs-md); color: var(--color-navy); }
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.empty-hint {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+.history-filter .btn { padding: var(--space-1) var(--space-4); }

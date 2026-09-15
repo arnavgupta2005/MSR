@@ -166,3 +166,93 @@ button {
   .pbi-row { gap: 4px; padding: 1px 0; }
   .pbi-dot { width: 7px; height: 7px; }
 }
+
+// ============================================================
+// Reusable admin import UI: buttons, alerts, chips, tables.
+// ============================================================
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  &:not(:disabled):hover { background: var(--color-primary-dark); }
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--color-border-strong);
+  color: var(--color-text-muted);
+  &:not(:disabled):hover { color: var(--color-primary); border-color: var(--color-primary); }
+}
+
+.alert {
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+
+  ul { margin: var(--space-2) 0 0; padding-left: var(--space-5); }
+}
+
+.alert-error { background: #fdecec; border: 1px solid #f5b5b5; color: #a12222; }
+.alert-warn { background: #fdf4e6; border: 1px solid #f2cf95; color: #9a5a12; }
+.alert-success { background: #e8f7ee; border: 1px solid #a7dcbd; color: #1a7a44; }
+
+.chips { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+.chip {
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.chip-total { background: var(--color-surface-alt); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+.chip-new { background: #e8f1fe; color: #1d4ed8; }
+.chip-dup { background: #fdf4e6; color: #9a5a12; }
+.chip-invalid { background: #fdecec; color: #a12222; }
+
+.table-scroll { overflow-x: auto; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+
+  th, td {
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+
+  thead th { color: var(--color-text-muted); font-weight: 700; background: var(--color-surface-alt); }
+  tbody tr[data-status='Invalid'] { background: #fef6f6; }
+  tbody tr[data-status='Duplicate'] { background: #fefbf3; }
+  .details { white-space: normal; min-width: 220px; }
+}
+
+.row-error { display: block; color: #a12222; font-size: var(--fs-xs); }
+
+.status-badge {
+  border-radius: 999px;
+  padding: 2px var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+
+  &[data-status='New'] { background: #e8f1fe; color: #1d4ed8; }
+  &[data-status='Duplicate'] { background: #fdf4e6; color: #9a5a12; }
+  &[data-status='Invalid'] { background: #fdecec; color: #a12222; }
+}

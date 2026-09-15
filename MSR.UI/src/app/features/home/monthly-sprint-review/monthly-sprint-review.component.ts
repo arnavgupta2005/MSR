@@ -6,8 +6,8 @@ interface ReportCard {
   title: string;
   description: string;
   route: string;
-  theme: 'dev' | 'qa' | 'feature';
-  icon: 'analytics' | 'shield' | 'calendar';
+  theme: 'dev' | 'qa' | 'feature' | 'admin';
+  icon: 'analytics' | 'shield' | 'calendar' | 'upload';
 }
 
 @Component({
@@ -39,6 +39,13 @@ export class MonthlySprintReviewComponent {
       route: '/feature-release',
       theme: 'feature',
       icon: 'calendar'
+    },
+    {
+      title: 'Admin\nData Import',
+      description: 'Upload Excel files to load sprint, QA and feature data into the database.',
+      route: '/admin',
+      theme: 'admin',
+      icon: 'upload'
     }
   ];
 }

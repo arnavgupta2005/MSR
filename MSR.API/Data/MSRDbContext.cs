@@ -19,6 +19,7 @@ public class MSRDbContext : DbContext
     public DbSet<QAPerformance> QAPerformances { get; set; }
     public DbSet<QADailyDelivery> QADailyDeliveries { get; set; }
     public DbSet<QAUserStory> QAUserStories { get; set; }
+    public DbSet<ImportHistory> ImportHistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +32,7 @@ public class MSRDbContext : DbContext
         modelBuilder.Entity<QAPerformance>().ToTable("QAPerformance");
         modelBuilder.Entity<QADailyDelivery>().ToTable("QADailyDelivery");
         modelBuilder.Entity<QAUserStory>().ToTable("QAUserStory");
+        modelBuilder.Entity<ImportHistory>().ToTable("ImportHistory");
     }
 }
 

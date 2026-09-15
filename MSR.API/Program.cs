@@ -6,7 +6,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Serialize enums (e.g. import row status) as readable strings.
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 builder.Services.AddCors(options =>
 {
@@ -26,6 +32,15 @@ builder.Services.AddDbContext<MSRDbContext>(options =>
 builder.Services.AddScoped<ISprintPerformanceService, SprintPerformanceService>();
 builder.Services.AddScoped<IQAService, QAService>();
 builder.Services.AddScoped<IFeatureReleaseService, FeatureReleaseService>();
+
+// Admin Excel import services
+builder.Services.AddScoped<IExcelReaderService, ExcelReaderService>();
+builder.Services.AddScoped<ISprintPerformanceImportService, SprintPerformanceImportService>();
+builder.Services.AddScoped<IQAPerformanceImportService, QAPerformanceImportService>();
+builder.Services.AddScoped<IQADailyDeliveryImportService, QADailyDeliveryImportService>();
+builder.Services.AddScoped<IQAUserStoryImportService, QAUserStoryImportService>();
+builder.Services.AddScoped<IFeatureReleaseImportService, FeatureReleaseImportService>();
+builder.Services.AddScoped<IImportHistoryService, ImportHistoryService>();
 
 
 builder.Services.AddOpenApi();

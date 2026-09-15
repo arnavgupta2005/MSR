@@ -113,6 +113,10 @@
     .icon { background: #fdf0e3; color: #ea8a2b; }
     .open-report { color: #ea8a2b; }
   }
+  &[data-theme='admin'] {
+    .icon { background: #efe9fb; color: #7c3aed; }
+    .open-report { color: #7c3aed; }
+  }
 }
 
 @media (max-width: 900px) {

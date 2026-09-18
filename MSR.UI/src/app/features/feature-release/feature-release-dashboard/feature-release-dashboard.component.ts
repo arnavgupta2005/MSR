@@ -63,16 +63,17 @@ export class FeatureReleaseDashboardComponent implements OnInit {
     return `${this.selectedProduct} Feature Release`;
   }
 
-  // Union of the two selections: rows whose planned sprint is selected OR whose
-  // actual sprint is selected. When both filters are empty, show all rows.
+  // Intersection of the two selections: rows whose planned sprint is selected
+  // AND whose actual sprint is selected. An empty filter imposes no constraint
+  // from that side, so both empty shows all rows.
   get filteredRows(): FeatureRelease[] {
-    if (this.selectedPlanned.length === 0 && this.selectedActual.length === 0) {
-      return this.rows;
-    }
-    return this.rows.filter(r =>
-      (r.plannedSprint !== null && this.selectedPlanned.includes(r.plannedSprint)) ||
-      (r.releasedSprint !== null && this.selectedActual.includes(r.releasedSprint))
-    );
+    return this.rows.filter(r => {
+      const plannedOk = this.selectedPlanned.length === 0 ||
+        (r.plannedSprint !== null && this.selectedPlanned.includes(r.plannedSprint));
+      const actualOk = this.selectedActual.length === 0 ||
+        (r.releasedSprint !== null && this.selectedActual.includes(r.releasedSprint));
+      return plannedOk && actualOk;
+    });
   }
 
   load(): void {

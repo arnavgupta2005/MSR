@@ -43,16 +43,3 @@ export interface ImportResult {
   fileErrors: string[];
   rows: ImportRowResult[];
 }
-
-export interface ImportHistoryItem {
-  importHistoryId: number;
-  fileName: string;
-  importType: string;
-  uploadedBy: string | null;
-  uploadedAt: string;
-  totalRows: number;
-  insertedRows: number;
-  duplicateRows: number;
-  invalidRows: number;
-  status: string;
-}

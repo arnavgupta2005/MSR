@@ -97,7 +97,6 @@ export interface ResourceCompletion {
 // ---- QA ----
 
 export interface QaKpi {
-  totalStories: number;
   capacity: number;
   totalStoryPoints: number;
   rollovers: number;

@@ -3,7 +3,6 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  ImportHistoryItem,
   ImportPreview,
   ImportResult
 } from '../models/admin-import-models';
@@ -29,8 +28,18 @@ export class AdminImportService {
     );
   }
 
-  getHistory(): Observable<ImportHistoryItem[]> {
-    return this.http.get<ImportHistoryItem[]>(`${this.baseUrl}/history`);
+  // Download a header-only Excel template for the given import type.
+  downloadTemplate(importKey: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${importKey}/template`, {
+      responseType: 'blob'
+    });
+  }
+
+  // Download a specific named template variant (e.g. QA Daily Delivery variants).
+  downloadTemplateVariant(templatePath: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${templatePath}`, {
+      responseType: 'blob'
+    });
   }
 
   private toFormData(file: File): FormData {

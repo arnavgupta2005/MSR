@@ -10,18 +10,15 @@ namespace MSR.API.Services
     {
         private readonly MSRDbContext _context;
         private readonly IExcelReaderService _excel;
-        private readonly IImportHistoryService _history;
 
         private const string ImportType = "Sprint Performance";
 
         public SprintPerformanceImportService(
             MSRDbContext context,
-            IExcelReaderService excel,
-            IImportHistoryService history)
+            IExcelReaderService excel)
         {
             _context = context;
             _excel = excel;
-            _history = history;
         }
 
         // ---- Foreign-key columns (canonical header -> display name) ----
@@ -76,7 +73,7 @@ namespace MSR.API.Services
                 return preview;
             }
 
-            var seenKeys = new HashSet<(int, int, int, int)>();
+            var seenKeys = new HashSet<(string, string, string, int)>();
             foreach (var row in readResult.Rows)
             {
                 var evaluated = EvaluateRow(row, master, seenKeys);
@@ -107,7 +104,7 @@ namespace MSR.API.Services
                 return result;
             }
 
-            var seenKeys = new HashSet<(int, int, int, int)>();
+            var seenKeys = new HashSet<(string, string, string, int)>();
             var toInsert = new List<SprintPerformance>();
 
             foreach (var row in readResult.Rows)
@@ -234,7 +231,7 @@ namespace MSR.API.Services
             {
                 SprintByNumber = sprints
                     .GroupBy(s => s.SprintNumber)
-                    .ToDictionary(g => g.Key, g => g.First().SprintId),
+                    .ToDictionary(g => g.Key, g => g.First()),
                 TeamByName = teams
                     .GroupBy(t => _excel.Canonicalize(t.TeamName))
                     .ToDictionary(g => g.Key, g => g.First()),
@@ -245,6 +242,7 @@ namespace MSR.API.Services
                 EmployeeNames = employees
                     .Select(e => _excel.Canonicalize(e.EmployeeName))
                     .ToHashSet(),
+                NewEmployeesByKey = new Dictionary<(string, string), Employee>(),
                 ExistingKeys = existingKeys
                     .Select(k => (k.SprintId, k.TeamId, k.EmployeeId, k.ProductAreaId))
                     .ToHashSet(),
@@ -255,7 +253,7 @@ namespace MSR.API.Services
         private (ImportRowResultDto Result, SprintPerformance? Entity) EvaluateRow(
             ExcelRow row,
             MasterData master,
-            HashSet<(int, int, int, int)> seenKeys)
+            HashSet<(string, string, string, int)> seenKeys)
         {
             var result = new ImportRowResultDto
             {
@@ -287,10 +285,10 @@ namespace MSR.API.Services
             }
 
             // ---- Foreign keys ----
-            var sprintId = ResolveSprint(row.Get(ColSprint), master, result.Errors);
+            var sprint = ResolveSprint(row.Get(ColSprint), master, result.Errors);
             var team = ResolveTeam(row.Get(ColTeam), master, result.Errors);
             var product = ResolveProduct(row.Get(ColProduct), master, result.Errors);
-            var employeeId = ResolveEmployee(row.Get(ColName), team, master, result.Errors);
+            var employee = ResolveEmployee(row.Get(ColName), team, master, result.Errors);
 
             if (result.Errors.Count > 0)
             {
@@ -298,15 +296,66 @@ namespace MSR.API.Services
                 return (result, null);
             }
 
-            entity.SprintId = sprintId!.Value;
-            entity.TeamId = team!.TeamId;
             entity.ProductAreaId = product!.ProductAreaId;
-            entity.EmployeeId = employeeId!.Value;
 
-            var key = (entity.SprintId, entity.TeamId, entity.EmployeeId, entity.ProductAreaId);
+            // Existing sprints/teams are referenced by id; unknown ones are created
+            // during import by attaching the new (untracked) entity.
+            string sprintKey;
+            if (sprint!.SprintId != 0)
+            {
+                entity.SprintId = sprint.SprintId;
+                sprintKey = sprint.SprintId.ToString(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                entity.Sprint = sprint;
+                sprintKey = "new:" + sprint.SprintNumber.ToString(CultureInfo.InvariantCulture);
+            }
 
-            // Duplicate against the database or an earlier row in the same file.
-            if (master.ExistingKeys.Contains(key) || !seenKeys.Add(key))
+            string teamKey;
+            if (team!.TeamId != 0)
+            {
+                entity.TeamId = team.TeamId;
+                teamKey = team.TeamId.ToString(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                entity.Team = team;
+                teamKey = "new:" + _excel.Canonicalize(team.TeamName);
+            }
+
+            // Existing employees are referenced by id; unknown employees (including
+            // a known name under a different team) are created during import.
+            string employeeKey;
+            if (employee!.EmployeeId != 0)
+            {
+                entity.EmployeeId = employee.EmployeeId;
+                employeeKey = employee.EmployeeId.ToString(CultureInfo.InvariantCulture);
+
+                // Only compare against DB duplicates when every key part exists in the
+                // database. New sprints/teams/employees cannot collide with the DB.
+                if (sprint.SprintId != 0 && team.TeamId != 0)
+                {
+                    var dbKey = (sprint.SprintId, team.TeamId, employee.EmployeeId, entity.ProductAreaId);
+                    if (master.ExistingKeys.Contains(dbKey))
+                    {
+                        result.Status = ImportRowStatus.Duplicate;
+                        result.Errors.Add(
+                            $"Duplicate record already exists for Sprint {result.Sprint}, " +
+                            $"Team {result.Team}, Employee {result.Employee}, Product {result.Product}.");
+                        return (result, null);
+                    }
+                }
+            }
+            else
+            {
+                entity.Employee = employee;
+                employeeKey = "new:" + _excel.Canonicalize(employee.EmployeeName);
+            }
+
+            // Duplicate against an earlier row in the same file.
+            var key = (sprintKey, teamKey, employeeKey, entity.ProductAreaId);
+            if (!seenKeys.Add(key))
             {
                 result.Status = ImportRowStatus.Duplicate;
                 result.Errors.Add(
@@ -319,7 +368,7 @@ namespace MSR.API.Services
             return (result, entity);
         }
 
-        private int? ResolveSprint(string? value, MasterData master, List<string> errors)
+        private Sprint? ResolveSprint(string? value, MasterData master, List<string> errors)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
@@ -333,13 +382,19 @@ namespace MSR.API.Services
                 return null;
             }
 
-            if (!master.SprintByNumber.TryGetValue(number, out var sprintId))
+            if (master.SprintByNumber.TryGetValue(number, out var sprint))
             {
-                errors.Add($"Sprint {number} does not exist in the database.");
-                return null;
+                return sprint;
             }
 
-            return sprintId;
+            // Unknown sprint: create a new one (reused across rows in this file).
+            if (!master.NewSprintsByNumber.TryGetValue(number, out var created))
+            {
+                created = new Sprint { SprintNumber = number };
+                master.NewSprintsByNumber[number] = created;
+            }
+
+            return created;
         }
 
         private Team? ResolveTeam(string? value, MasterData master, List<string> errors)
@@ -350,13 +405,20 @@ namespace MSR.API.Services
                 return null;
             }
 
-            if (!master.TeamByName.TryGetValue(_excel.Canonicalize(value), out var team))
+            var canonical = _excel.Canonicalize(value);
+            if (master.TeamByName.TryGetValue(canonical, out var team))
             {
-                errors.Add($"Team '{value}' does not exist in the database.");
-                return null;
+                return team;
             }
 
-            return team;
+            // Unknown team: create a new one (reused across rows in this file).
+            if (!master.NewTeamsByName.TryGetValue(canonical, out var created))
+            {
+                created = new Team { TeamName = value.Trim() };
+                master.NewTeamsByName[canonical] = created;
+            }
+
+            return created;
         }
 
         private ProductArea? ResolveProduct(string? value, MasterData master, List<string> errors)
@@ -376,7 +438,7 @@ namespace MSR.API.Services
             return product;
         }
 
-        private int? ResolveEmployee(string? value, Team? team, MasterData master, List<string> errors)
+        private Employee? ResolveEmployee(string? value, Team? team, MasterData master, List<string> errors)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
@@ -391,24 +453,42 @@ namespace MSR.API.Services
             }
 
             var canonicalName = _excel.Canonicalize(value);
-            var match = master.Employees.FirstOrDefault(e =>
-                _excel.Canonicalize(e.EmployeeName) == canonicalName && e.TeamId == team.TeamId);
 
-            if (match is not null)
+            // A newly-created team (TeamId == 0) has no existing employees, so the
+            // employee must be created and attached to that new team.
+            if (team.TeamId != 0)
             {
-                return match.EmployeeId;
+                var match = master.Employees.FirstOrDefault(e =>
+                    _excel.Canonicalize(e.EmployeeName) == canonicalName && e.TeamId == team.TeamId);
+
+                if (match is not null)
+                {
+                    return match;
+                }
             }
 
-            if (master.EmployeeNames.Contains(canonicalName))
+            // Unknown employee, or a known name under a different team: create a new
+            // employee for this team (reused across rows in this file). When the team
+            // is new its id is 0, so attach the team by navigation instead of id.
+            var teamKey = team.TeamId != 0
+                ? team.TeamId.ToString(CultureInfo.InvariantCulture)
+                : "new:" + _excel.Canonicalize(team.TeamName);
+            var key = (canonicalName, teamKey);
+            if (!master.NewEmployeesByKey.TryGetValue(key, out var created))
             {
-                errors.Add($"Employee '{value}' does not belong to team '{team.TeamName}'.");
-            }
-            else
-            {
-                errors.Add($"Employee '{value}' not found.");
+                created = new Employee { EmployeeName = value.Trim() };
+                if (team.TeamId != 0)
+                {
+                    created.TeamId = team.TeamId;
+                }
+                else
+                {
+                    created.Team = team;
+                }
+                master.NewEmployeesByKey[key] = created;
             }
 
-            return null;
+            return created;
         }
 
         private static bool TryValidateInt(string? value, string display, List<string> errors, out int result)
@@ -479,11 +559,14 @@ namespace MSR.API.Services
 
         private sealed class MasterData
         {
-            public Dictionary<int, int> SprintByNumber { get; init; } = new();
+            public Dictionary<int, Sprint> SprintByNumber { get; init; } = new();
             public Dictionary<string, Team> TeamByName { get; init; } = new();
             public Dictionary<string, ProductArea> ProductByName { get; init; } = new();
             public List<Employee> Employees { get; init; } = new();
             public HashSet<string> EmployeeNames { get; init; } = new();
+            public Dictionary<int, Sprint> NewSprintsByNumber { get; init; } = new();
+            public Dictionary<string, Team> NewTeamsByName { get; init; } = new();
+            public Dictionary<(string, string), Employee> NewEmployeesByKey { get; init; } = new();
             public HashSet<(int, int, int, int)> ExistingKeys { get; init; } = new();
 
             public static MasterData Empty => new();

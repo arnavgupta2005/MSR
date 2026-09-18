@@ -44,6 +44,60 @@
           (click)="clearSelection(section, fileInput)">
           Clear
         </button>
+
+        <button
+          type="button"
+          class="btn btn-template"
+          *ngIf="hasTemplate(section)"
+          (click)="downloadTemplate(section)">
+          <svg class="btn-template-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Excel Template
+        </button>
+
+        <div class="template-group" *ngIf="hasDeliveryTemplates(section)">
+          <button
+            type="button"
+            class="btn btn-template"
+            (click)="downloadDeliveryTemplate(section, 'intrics')">
+            <svg class="btn-template-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download Template - Intrics QA
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-template"
+            (click)="downloadDeliveryTemplate(section, 'infoquest')">
+            <svg class="btn-template-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download Template - InfoQuest QA
+          </button>
+        </div>
+      </div>
+
+      <!-- Upload hint: only Excel (.xlsx) files are accepted. -->
+      <div class="file-hint">
+        <svg class="file-hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="9" y1="13" x2="15" y2="17"></line>
+          <line x1="15" y1="13" x2="9" y2="17"></line>
+        </svg>
+        <span>Only Excel files are supported.</span>
       </div>
 
       <!-- Client-side / file-level errors -->
@@ -132,50 +186,6 @@
           Invalid: {{ section.importResult.invalidRows }}
         </div>
       </div>
-    </div>
-  </app-dashboard-section>
-
-  <!-- ============ Import History ============ -->
-  <app-dashboard-section title="Import History" [index]="sections.length + 1">
-    <div filter class="history-filter">
-      <button type="button" class="btn btn-ghost" (click)="loadHistory()">Refresh</button>
-    </div>
-
-    <app-loading-state *ngIf="historyLoading" message="Loading history…"></app-loading-state>
-
-    <p class="empty-hint" *ngIf="!historyLoading && history.length === 0">
-      No imports have been recorded yet.
-    </p>
-
-    <div class="table-scroll" *ngIf="!historyLoading && history.length > 0">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>File Name</th>
-            <th>Type</th>
-            <th>Uploaded By</th>
-            <th>Date/Time</th>
-            <th>Total</th>
-            <th>Inserted</th>
-            <th>Duplicates</th>
-            <th>Failed</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let h of history">
-            <td>{{ h.fileName }}</td>
-            <td>{{ h.importType }}</td>
-            <td>{{ h.uploadedBy }}</td>
-            <td>{{ h.uploadedAt | date: 'dd-MMM-yyyy HH:mm' }}</td>
-            <td>{{ h.totalRows }}</td>
-            <td>{{ h.insertedRows }}</td>
-            <td>{{ h.duplicateRows }}</td>
-            <td>{{ h.invalidRows }}</td>
-            <td>{{ h.status }}</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </app-dashboard-section>
 </div>

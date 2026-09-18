@@ -1,11 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { catchError, finalize, of } from 'rxjs';
 
 import { AdminImportService } from '../../../core/services/admin-import.service';
 import {
-  ImportHistoryItem,
   ImportPreview,
   ImportResult,
   ImportRowResult
@@ -18,7 +17,6 @@ type ImportKey =
   | 'sprint-performance'
   | 'qa-performance'
   | 'qa-daily-delivery'
-  | 'qa-user-story'
   | 'feature-release';
 
 // A preview-table column definition (label + which row field to display).
@@ -49,7 +47,7 @@ interface ImportSection {
   templateUrl: './admin-import.component.html',
   styleUrl: './admin-import.component.scss'
 })
-export class AdminImportComponent implements OnInit {
+export class AdminImportComponent {
   private readonly service = inject(AdminImportService);
 
   readonly sections: ImportSection[] = [
@@ -92,19 +90,6 @@ export class AdminImportComponent implements OnInit {
       ...AdminImportComponent.initialState()
     },
     {
-      key: 'qa-user-story',
-      title: 'QA User Story',
-      description:
-        'Upload QA user story / work item data. The product is read from the Excel Product column.',
-      columns: [
-        { label: 'Sprint', field: 'sprint' },
-        { label: 'Work Item ID', field: 'workItemId' },
-        { label: 'Work Item Type', field: 'workItemType' },
-        { label: 'Product', field: 'product' }
-      ],
-      ...AdminImportComponent.initialState()
-    },
-    {
       key: 'feature-release',
       title: 'Feature Release',
       description:
@@ -119,12 +104,77 @@ export class AdminImportComponent implements OnInit {
     }
   ];
 
-  // ---- Import history ----
-  historyLoading = false;
-  history: ImportHistoryItem[] = [];
+  // Import types that offer a downloadable Excel template.
+  private static readonly templateKeys: ReadonlySet<ImportKey> = new Set<ImportKey>([
+    'sprint-performance',
+    'qa-performance',
+    'feature-release'
+  ]);
 
-  ngOnInit(): void {
-    this.loadHistory();
+  hasTemplate(section: ImportSection): boolean {
+    return AdminImportComponent.templateKeys.has(section.key);
+  }
+
+  // QA Daily Delivery offers two variant templates (Intrics QA and InfoQuest QA).
+  hasDeliveryTemplates(section: ImportSection): boolean {
+    return section.key === 'qa-daily-delivery';
+  }
+
+  downloadTemplate(section: ImportSection): void {
+    if (!this.hasTemplate(section)) {
+      return;
+    }
+
+    const templateNames: Record<string, string> = {
+      'sprint-performance': 'Sprint_Performance_Template.xlsx',
+      'qa-performance': 'QA_Performance_Template.xlsx',
+      'feature-release': 'Feature_Release_Template.xlsx'
+    };
+    const fileName = templateNames[section.key];
+
+    this.service
+      .downloadTemplate(section.key)
+      .pipe(
+        catchError(() => {
+          section.clientError =
+            'Could not download the template. Please check the API is running and try again.';
+          return of(null);
+        })
+      )
+      .subscribe(blob => this.saveBlob(blob, fileName));
+  }
+
+  // Download one of the QA Daily Delivery variant templates.
+  downloadDeliveryTemplate(section: ImportSection, variant: 'intrics' | 'infoquest'): void {
+    const fileName =
+      variant === 'intrics'
+        ? 'Intrics_QA_Daily_Delivery_Template.xlsx'
+        : 'InfoQuest_QA_Daily_Delivery_Template.xlsx';
+
+    this.service
+      .downloadTemplateVariant(`qa-daily-delivery/template/${variant}`)
+      .pipe(
+        catchError(() => {
+          section.clientError =
+            'Could not download the template. Please check the API is running and try again.';
+          return of(null);
+        })
+      )
+      .subscribe(blob => this.saveBlob(blob, fileName));
+  }
+
+  // Trigger a browser download for a downloaded template blob.
+  private saveBlob(blob: Blob | null, fileName: string): void {
+    if (!blob) {
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   onFileSelected(section: ImportSection, event: Event): void {
@@ -151,7 +201,6 @@ export class AdminImportComponent implements OnInit {
     if (!section.selectedFile || section.validating) {
       return;
     }
-
     section.validating = true;
     section.preview = null;
     section.importResult = null;
@@ -202,7 +251,6 @@ export class AdminImportComponent implements OnInit {
         if (result) {
           section.importResult = result;
           section.preview = null;
-          this.loadHistory();
         }
       });
   }
@@ -217,17 +265,6 @@ export class AdminImportComponent implements OnInit {
     section.selectedFile = null;
     fileInput.value = '';
     this.resetSection(section);
-  }
-
-  loadHistory(): void {
-    this.historyLoading = true;
-    this.service
-      .getHistory()
-      .pipe(
-        catchError(() => of([] as ImportHistoryItem[])),
-        finalize(() => (this.historyLoading = false))
-      )
-      .subscribe(items => (this.history = items));
   }
 
   canImport(section: ImportSection): boolean {

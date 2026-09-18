@@ -11,7 +11,6 @@ namespace MSR.API.Services
     {
         private readonly MSRDbContext _context;
         private readonly IExcelReaderService _excel;
-        private readonly IImportHistoryService _history;
 
         private const string ImportType = "QA Daily Delivery";
 
@@ -21,12 +20,10 @@ namespace MSR.API.Services
 
         public QADailyDeliveryImportService(
             MSRDbContext context,
-            IExcelReaderService excel,
-            IImportHistoryService history)
+            IExcelReaderService excel)
         {
             _context = context;
             _excel = excel;
-            _history = history;
         }
 
         // ---- Columns (canonical header -> display name) ----
@@ -34,6 +31,11 @@ namespace MSR.API.Services
         private const string ColDays = "days";
         private const string ColDelivery = "delivery";
         private const string ColProduct = "product";
+
+        // InfoQuest QA has an extra Web/Mobile column and its Web + Mobile
+        // deliveries are aggregated into a single record per Sprint + Day.
+        // Canonicalized product name used to detect this special case.
+        private const string InfoQuestQaProduct = "infoquest qa";
 
         public async Task<ImportPreviewDto> ValidateAsync(Stream stream, string fileName)
         {
@@ -159,7 +161,91 @@ namespace MSR.API.Services
             }
 
             var master = await LoadMasterDataAsync();
+
+            // InfoQuest QA delivers Web and Mobile rows separately; collapse them
+            // into one aggregated row per Sprint + Day before validation/import.
+            AggregateInfoQuestRows(read);
+
             return (read, columnErrors, master);
+        }
+
+        // ---- Merge InfoQuest QA Web/Mobile rows into a single delivery per Sprint + Day ----
+        // For InfoQuest QA the source file contains separate Web and Mobile rows.
+        // These must be combined (Delivery = Web + Mobile) into one record per
+        // Sprint + Day. All other products (e.g. Intrics) are left untouched.
+        private void AggregateInfoQuestRows(ExcelReadResult read)
+        {
+            var hasInfoQuest = read.Rows.Any(r =>
+                _excel.Canonicalize(r.Get(ColProduct)) == InfoQuestQaProduct);
+
+            if (!hasInfoQuest)
+            {
+                return;
+            }
+
+            var aggregated = new List<ExcelRow>();
+            // Key: canonical Sprint + Day -> the row that accumulates the delivery total.
+            var infoQuestGroups = new Dictionary<(string Sprint, string Day), ExcelRow>();
+
+            foreach (var row in read.Rows)
+            {
+                if (_excel.Canonicalize(row.Get(ColProduct)) != InfoQuestQaProduct)
+                {
+                    aggregated.Add(row);
+                    continue;
+                }
+
+                var sprint = row.Get(ColSprint)?.Trim() ?? string.Empty;
+                var day = row.Get(ColDays)?.Trim() ?? string.Empty;
+                var key = (_excel.Canonicalize(sprint), _excel.Canonicalize(day));
+
+                if (!infoQuestGroups.TryGetValue(key, out var existing))
+                {
+                    infoQuestGroups[key] = row;
+                    aggregated.Add(row);
+                    continue;
+                }
+
+                // Combine this row's delivery into the previously kept row.
+                existing.Cells[ColDelivery] =
+                    SumDelivery(existing.Get(ColDelivery), row.Get(ColDelivery));
+            }
+
+            read.Rows = aggregated;
+        }
+
+        // Adds two delivery cell values. If either value is not a valid whole
+        // number the original text is preserved so row validation still reports it.
+        private static string? SumDelivery(string? first, string? second)
+        {
+            var firstValid = TryParseDelivery(first, out var a);
+            var secondValid = TryParseDelivery(second, out var b);
+
+            if (firstValid && secondValid)
+            {
+                return (a + b).ToString(CultureInfo.InvariantCulture);
+            }
+
+            // Keep a non-null invalid value so downstream validation surfaces the error.
+            return firstValid ? second : first;
+        }
+
+        private static bool TryParseDelivery(string? value, out int result)
+        {
+            result = 0;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            if (!decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var number)
+                || number != Math.Truncate(number))
+            {
+                return false;
+            }
+
+            result = (int)number;
+            return true;
         }
 
         private List<string> ValidateColumns(ExcelReadResult read)

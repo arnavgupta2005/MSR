@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 
@@ -15,6 +16,70 @@ namespace MSR.API.Services
             }
 
             return WhitespaceRegex.Replace(value.Trim(), " ").ToLowerInvariant();
+        }
+
+        // Reads a cell's logical value as text. For numeric cells this returns the
+        // underlying number (culture-invariant) rather than the formatted string,
+        // so numbers that carry a Date/percent/custom format (e.g. "9" shown as a
+        // date) still parse correctly downstream. Blank cells return null.
+        private static string? ReadCellValue(IXLCell cell)
+        {
+            if (cell.IsEmpty())
+            {
+                return null;
+            }
+
+            switch (cell.DataType)
+            {
+                case XLDataType.Number:
+                    return cell.GetDouble().ToString(CultureInfo.InvariantCulture);
+
+                case XLDataType.DateTime:
+                    // A number formatted as a date: recover the numeric serial value.
+                    if (cell.TryGetValue<double>(out var serial))
+                    {
+                        return serial.ToString(CultureInfo.InvariantCulture);
+                    }
+                    break;
+
+                case XLDataType.Boolean:
+                    return cell.GetBoolean() ? "1" : "0";
+            }
+
+            // Text (or unknown) cell. Numbers are sometimes stored as text and may
+            // contain invisible characters (non-breaking spaces, zero-width spaces)
+            // that break numeric parsing. Clean the text and, if it is actually a
+            // number, return the canonical invariant form.
+            var text = cell.GetString();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return null;
+            }
+
+            var cleaned = CleanText(text);
+            if (cleaned.Length == 0)
+            {
+                return null;
+            }
+
+            if (double.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var number))
+            {
+                return number.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return cleaned;
+        }
+
+        // Removes invisible/formatting characters that Excel can leave in text
+        // cells (non-breaking space, zero-width space, BOM) and trims the result.
+        private static string CleanText(string value)
+        {
+            var cleaned = value
+                .Replace('\u00A0', ' ') // non-breaking space
+                .Replace("\u200B", string.Empty) // zero-width space
+                .Replace("\uFEFF", string.Empty); // BOM / zero-width no-break space
+
+            return cleaned.Trim();
         }
 
         public ExcelReadResult Read(Stream stream, string fileName)
@@ -102,11 +167,10 @@ namespace MSR.API.Services
                             continue;
                         }
 
-                        var text = row.Cell(i + 1).GetString();
-                        var trimmed = string.IsNullOrWhiteSpace(text) ? null : text.Trim();
-                        excelRow.Cells[header] = trimmed;
+                        var value = ReadCellValue(row.Cell(i + 1));
+                        excelRow.Cells[header] = value;
 
-                        if (trimmed is not null)
+                        if (value is not null)
                         {
                             hasAnyValue = true;
                         }

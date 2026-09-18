@@ -25,16 +25,8 @@ namespace MSR.API.Services
                     q.ProductAreaId == filter.ProductAreaId &&
                     filter.SprintIds.Contains(q.SprintId));
 
-            var userStoryQuery = _context.QAUserStories
-                .Where(q =>
-                    q.ProductAreaId == filter.ProductAreaId &&
-                    filter.SprintIds.Contains(q.SprintId) &&
-                    q.WorkItemType == "User Story");
-
             return new QAKpiDto
             {
-                TotalStories = await userStoryQuery.CountAsync(),
-
                 Capacity = await performanceQuery
                     .SumAsync(q => (int?)q.QACapacity) ?? 0,
 

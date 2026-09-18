@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ClosedXML.Excel;
 using MSR.API.DTOs.Admin;
 using MSR.API.Services;
 
@@ -11,9 +12,7 @@ public class AdminImportController : ControllerBase
     private readonly ISprintPerformanceImportService _sprintImport;
     private readonly IQAPerformanceImportService _qaPerformanceImport;
     private readonly IQADailyDeliveryImportService _qaDailyDeliveryImport;
-    private readonly IQAUserStoryImportService _qaUserStoryImport;
     private readonly IFeatureReleaseImportService _featureReleaseImport;
-    private readonly IImportHistoryService _history;
 
     // Reject oversized uploads early (10 MB is generous for these sheets).
     private const long MaxFileSizeBytes = 10 * 1024 * 1024;
@@ -22,16 +21,12 @@ public class AdminImportController : ControllerBase
         ISprintPerformanceImportService sprintImport,
         IQAPerformanceImportService qaPerformanceImport,
         IQADailyDeliveryImportService qaDailyDeliveryImport,
-        IQAUserStoryImportService qaUserStoryImport,
-        IFeatureReleaseImportService featureReleaseImport,
-        IImportHistoryService history)
+        IFeatureReleaseImportService featureReleaseImport)
     {
         _sprintImport = sprintImport;
         _qaPerformanceImport = qaPerformanceImport;
         _qaDailyDeliveryImport = qaDailyDeliveryImport;
-        _qaUserStoryImport = qaUserStoryImport;
         _featureReleaseImport = featureReleaseImport;
-        _history = history;
     }
 
     // Validate a Sprint Performance Excel file and return a preview.
@@ -105,18 +100,6 @@ public class AdminImportController : ControllerBase
     public Task<IActionResult> ImportQADailyDelivery(IFormFile? file)
         => RunImport(file, _qaDailyDeliveryImport.ImportAsync);
 
-    // ---- QA User Story ----
-
-    [HttpPost("qa-user-story/validate")]
-    [RequestSizeLimit(MaxFileSizeBytes)]
-    public Task<IActionResult> ValidateQAUserStory(IFormFile? file)
-        => RunValidate(file, "QA User Story", _qaUserStoryImport.ValidateAsync);
-
-    [HttpPost("qa-user-story")]
-    [RequestSizeLimit(MaxFileSizeBytes)]
-    public Task<IActionResult> ImportQAUserStory(IFormFile? file)
-        => RunImport(file, _qaUserStoryImport.ImportAsync);
-
     // ---- Feature Release ----
 
     [HttpPost("feature-release/validate")]
@@ -177,12 +160,84 @@ public class AdminImportController : ControllerBase
         return Ok(result);
     }
 
-    // Import history across all import types.
-    [HttpGet("history")]
-    public async Task<IActionResult> GetHistory()
+    // ---- Excel template downloads ----
+
+    // Exact Sprint Performance columns expected by the importer (21 columns, in order).
+    private static readonly string[] SprintPerformanceTemplateHeaders =
     {
-        var history = await _history.GetHistoryAsync();
-        return Ok(history);
+        "Sprint", "Team Name", "Name", "Working Days", "Holidays", "Assigned Points",
+        "Sprint Days", "Leaves", "Planned Items", "Delivered Items", "User Stories",
+        "Bugs", "Rollover Points", "Rollovers", "Delivered Points", "Capacity",
+        "Ideal Story Points", "Product", "Velocity", "Actual Velocity", "Trailing Velocity"
+    };
+
+    // Exact QA Performance columns expected by the importer (12 columns, in order).
+    private static readonly string[] QAPerformanceTemplateHeaders =
+    {
+        "Sprint", "Name", "Working Days", "Capacity", "Average velocity", "Assigned Points",
+        "Delivered Points", "Observations", "Rollover Points", "Rollovers", "Iterations", "Product"
+    };
+
+    // Feature Release columns expected by the importer (required + optional, in order).
+    private static readonly string[] FeatureReleaseTemplateHeaders =
+    {
+        "Feature Description", "Planned Sprint", "Released Sprint", "Reason of delay", "Product"
+    };
+
+    // QA Daily Delivery columns expected by the importer (Intrics QA variant).
+    private static readonly string[] QADailyDeliveryIntricsTemplateHeaders =
+    {
+        "Sprint", "Days", "Delivery", "Product"
+    };
+
+    // QA Daily Delivery columns for the InfoQuest QA variant (extra Web/Mobile column).
+    private static readonly string[] QADailyDeliveryInfoQuestTemplateHeaders =
+    {
+        "Sprint", "Web/Mobile", "Days", "Delivery", "Product"
+    };
+
+    [HttpGet("sprint-performance/template")]
+    public IActionResult DownloadSprintPerformanceTemplate()
+        => BuildTemplate(SprintPerformanceTemplateHeaders, "Sprint Performance", "Sprint_Performance_Template.xlsx");
+
+    [HttpGet("qa-performance/template")]
+    public IActionResult DownloadQAPerformanceTemplate()
+        => BuildTemplate(QAPerformanceTemplateHeaders, "QA Performance", "QA_Performance_Template.xlsx");
+
+    [HttpGet("feature-release/template")]
+    public IActionResult DownloadFeatureReleaseTemplate()
+        => BuildTemplate(FeatureReleaseTemplateHeaders, "Feature Release", "Feature_Release_Template.xlsx");
+
+    [HttpGet("qa-daily-delivery/template/intrics")]
+    public IActionResult DownloadQADailyDeliveryIntricsTemplate()
+        => BuildTemplate(QADailyDeliveryIntricsTemplateHeaders, "Intrics QA", "Intrics_QA_Daily_Delivery_Template.xlsx");
+
+    [HttpGet("qa-daily-delivery/template/infoquest")]
+    public IActionResult DownloadQADailyDeliveryInfoQuestTemplate()
+        => BuildTemplate(QADailyDeliveryInfoQuestTemplateHeaders, "InfoQuest QA", "InfoQuest_QA_Daily_Delivery_Template.xlsx");
+
+    // Build a header-only .xlsx template from the given column list.
+    private static FileContentResult BuildTemplate(string[] headers, string sheetName, string fileName)
+    {
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add(sheetName);
+
+        for (var i = 0; i < headers.Length; i++)
+        {
+            sheet.Cell(1, i + 1).Value = headers[i];
+        }
+
+        sheet.Row(1).Style.Font.Bold = true;
+
+        using var memory = new MemoryStream();
+        workbook.SaveAs(memory);
+
+        return new FileContentResult(
+            memory.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        {
+            FileDownloadName = fileName
+        };
     }
 
     private static string? ValidateUpload(IFormFile? file)

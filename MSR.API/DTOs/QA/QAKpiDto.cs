@@ -2,8 +2,6 @@
 {
     public class QAKpiDto
     {
-        
-        public int TotalStories { get; set; }
 
         public int Capacity { get; set; }
 

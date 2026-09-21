@@ -129,6 +129,16 @@ namespace MSR.API.Services
             await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // Create any sprint numbers referenced by the file that do not yet
+                // exist, so the new feature releases point at valid sprints.
+                if (master.NewSprintNumbers.Count > 0)
+                {
+                    var newSprints = master.NewSprintNumbers
+                        .Select(n => new Sprint { SprintNumber = n })
+                        .ToList();
+                    await _context.Sprints.AddRangeAsync(newSprints);
+                }
+
                 await _context.FeatureReleases.AddRangeAsync(toInsert);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -336,8 +346,9 @@ namespace MSR.API.Services
 
             if (!master.SprintNumbers.Contains(number))
             {
-                errors.Add($"{fieldName} '{value}' does not exist in the database.");
-                return null;
+                // Unknown sprint number: register it so it is created during import
+                // (mirrors the auto-create behaviour of the other importers).
+                master.NewSprintNumbers.Add(number);
             }
 
             return number;
@@ -420,6 +431,7 @@ namespace MSR.API.Services
         private sealed class MasterData
         {
             public HashSet<int> SprintNumbers { get; init; } = new();
+            public HashSet<int> NewSprintNumbers { get; init; } = new();
             public HashSet<(string, string, int)> ExistingKeys { get; init; } = new();
 
             public static MasterData Empty => new();

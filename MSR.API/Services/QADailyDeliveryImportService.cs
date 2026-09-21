@@ -56,7 +56,7 @@ namespace MSR.API.Services
                 return preview;
             }
 
-            var seenKeys = new HashSet<(int, int, int)>();
+            var seenKeys = new HashSet<(string, int, int)>();
             foreach (var row in readResult.Rows)
             {
                 var evaluated = EvaluateRow(row, master, seenKeys);
@@ -87,7 +87,7 @@ namespace MSR.API.Services
                 return result;
             }
 
-            var seenKeys = new HashSet<(int, int, int)>();
+            var seenKeys = new HashSet<(string, int, int)>();
             var toInsert = new List<QADailyDelivery>();
 
             foreach (var row in readResult.Rows)
@@ -294,7 +294,7 @@ namespace MSR.API.Services
             {
                 SprintByNumber = sprints
                     .GroupBy(s => s.SprintNumber)
-                    .ToDictionary(g => g.Key, g => g.First().SprintId),
+                    .ToDictionary(g => g.Key, g => g.First()),
                 ProductByName = products
                     .GroupBy(p => _excel.Canonicalize(p.ProductAreaName))
                     .ToDictionary(g => g.Key, g => g.First()),
@@ -308,7 +308,7 @@ namespace MSR.API.Services
         private (ImportRowResultDto Result, QADailyDelivery? Entity) EvaluateRow(
             ExcelRow row,
             MasterData master,
-            HashSet<(int, int, int)> seenKeys)
+            HashSet<(string, int, int)> seenKeys)
         {
             var result = new ImportRowResultDto
             {
@@ -333,7 +333,7 @@ namespace MSR.API.Services
             }
 
             // ---- Foreign keys ----
-            var sprintId = ResolveSprint(row.Get(ColSprint), master, result.Errors);
+            var sprint = ResolveSprint(row.Get(ColSprint), master, result.Errors);
             var product = ResolveProduct(row.Get(ColProduct), master, result.Errors);
 
             if (result.Errors.Count > 0)
@@ -342,13 +342,29 @@ namespace MSR.API.Services
                 return (result, null);
             }
 
-            entity.SprintId = sprintId!.Value;
             entity.ProductAreaId = product!.ProductAreaId;
 
-            var key = (entity.SprintId, entity.ProductAreaId, entity.Day);
+            // Existing sprints are referenced by id; unknown ones are created during
+            // import by attaching the new (untracked) entity.
+            string sprintKey;
+            if (sprint!.SprintId != 0)
+            {
+                entity.SprintId = sprint.SprintId;
+                sprintKey = sprint.SprintId.ToString(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                entity.Sprint = sprint;
+                sprintKey = "new:" + sprint.SprintNumber.ToString(CultureInfo.InvariantCulture);
+            }
 
-            // Duplicate against the database or an earlier row in the same file.
-            if (master.ExistingKeys.Contains(key) || !seenKeys.Add(key))
+            var key = (sprintKey, entity.ProductAreaId, entity.Day);
+
+            // Duplicate against the database (only when the sprint already exists) or
+            // an earlier row in the same file.
+            var isDbDuplicate = sprint.SprintId != 0
+                && master.ExistingKeys.Contains((sprint.SprintId, entity.ProductAreaId, entity.Day));
+            if (isDbDuplicate || !seenKeys.Add(key))
             {
                 result.Status = ImportRowStatus.Duplicate;
                 result.Errors.Add(
@@ -386,7 +402,7 @@ namespace MSR.API.Services
             return day;
         }
 
-        private int? ResolveSprint(string? value, MasterData master, List<string> errors)
+        private Sprint? ResolveSprint(string? value, MasterData master, List<string> errors)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
@@ -400,13 +416,19 @@ namespace MSR.API.Services
                 return null;
             }
 
-            if (!master.SprintByNumber.TryGetValue(number, out var sprintId))
+            if (master.SprintByNumber.TryGetValue(number, out var sprint))
             {
-                errors.Add($"Sprint {number} does not exist in the database.");
-                return null;
+                return sprint;
             }
 
-            return sprintId;
+            // Unknown sprint: create a new one (reused across rows in this file).
+            if (!master.NewSprintsByNumber.TryGetValue(number, out var created))
+            {
+                created = new Sprint { SprintNumber = number };
+                master.NewSprintsByNumber[number] = created;
+            }
+
+            return created;
         }
 
         private ProductArea? ResolveProduct(string? value, MasterData master, List<string> errors)
@@ -469,8 +491,9 @@ namespace MSR.API.Services
 
         private sealed class MasterData
         {
-            public Dictionary<int, int> SprintByNumber { get; init; } = new();
+            public Dictionary<int, Sprint> SprintByNumber { get; init; } = new();
             public Dictionary<string, ProductArea> ProductByName { get; init; } = new();
+            public Dictionary<int, Sprint> NewSprintsByNumber { get; init; } = new();
             public HashSet<(int, int, int)> ExistingKeys { get; init; } = new();
 
             public static MasterData Empty => new();

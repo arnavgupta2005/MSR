@@ -1,0 +1,40 @@
+<div class="page dashboard">
+  <a class="back-link" routerLink="/">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M11 18l-6-6 6-6"></path>
+    </svg>
+    Monthly Sprint Review
+  </a>
+
+  <header class="report-header">
+    <h1>ServiceNow Tickets</h1>
+    <p>Monthly Sprint Review - ServiceNow Ticket Trends</p>
+  </header>
+
+  <!-- Sprint filter -->
+  <div class="card product-bar">
+    <div class="sprint-filter">
+      <span class="inline-label">Sprint</span>
+      <app-sprint-multi-select
+        [sprints]="sprintOptions"
+        [selected]="selectedSprints"
+        [max]="5"
+        (selectedChange)="onSprintsChange($event)">
+      </app-sprint-multi-select>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-grid">
+    <app-chart-card
+      class="span-12"
+      title="Service Now Tickets by Sprint"
+      [state]="chart.state"
+      [options]="chart.options"
+      [chartHeight]="420"
+      emptyMessage="No ServiceNow ticket data available for the selected sprint(s)."
+      (retry)="load()">
+    </app-chart-card>
+  </div>
+</div>

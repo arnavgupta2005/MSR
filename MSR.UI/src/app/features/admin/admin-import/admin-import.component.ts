@@ -17,7 +17,8 @@ type ImportKey =
   | 'sprint-performance'
   | 'qa-performance'
   | 'qa-daily-delivery'
-  | 'feature-release';
+  | 'feature-release'
+  | 'service-now-ticket';
 
 // A preview-table column definition (label + which row field to display).
 interface PreviewColumn {
@@ -101,6 +102,21 @@ export class AdminImportComponent {
         { label: 'Product', field: 'product' }
       ],
       ...AdminImportComponent.initialState()
+    },
+    {
+      key: 'service-now-ticket',
+      title: 'ServiceNow Tickets',
+      description:
+        'Upload ServiceNow ticket data (critical/web/mobile counts and completion percentage) per sprint.',
+      columns: [
+        { label: 'Sprint', field: 'sprint' },
+        { label: 'CriticalWeb', field: 'criticalWeb' },
+        { label: 'Web', field: 'web' },
+        { label: 'CriticalMobile', field: 'criticalMobile' },
+        { label: 'Mobile', field: 'mobile' },
+        { label: 'CompletionPercentage', field: 'completionPercentage' }
+      ],
+      ...AdminImportComponent.initialState()
     }
   ];
 
@@ -108,7 +124,8 @@ export class AdminImportComponent {
   private static readonly templateKeys: ReadonlySet<ImportKey> = new Set<ImportKey>([
     'sprint-performance',
     'qa-performance',
-    'feature-release'
+    'feature-release',
+    'service-now-ticket'
   ]);
 
   hasTemplate(section: ImportSection): boolean {
@@ -128,7 +145,8 @@ export class AdminImportComponent {
     const templateNames: Record<string, string> = {
       'sprint-performance': 'Sprint_Performance_Template.xlsx',
       'qa-performance': 'QA_Performance_Template.xlsx',
-      'feature-release': 'Feature_Release_Template.xlsx'
+      'feature-release': 'Feature_Release_Template.xlsx',
+      'service-now-ticket': 'ServiceNow_Tickets_Template.xlsx'
     };
     const fileName = templateNames[section.key];
 

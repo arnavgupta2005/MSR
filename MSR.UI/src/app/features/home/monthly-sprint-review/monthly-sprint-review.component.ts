@@ -6,8 +6,8 @@ interface ReportCard {
   title: string;
   description: string;
   route: string;
-  theme: 'dev' | 'qa' | 'feature' | 'admin';
-  icon: 'analytics' | 'shield' | 'calendar' | 'upload';
+  theme: 'dev' | 'qa' | 'feature' | 'admin' | 'servicenow';
+  icon: 'analytics' | 'shield' | 'calendar' | 'upload' | 'ticket';
 }
 
 @Component({
@@ -39,6 +39,13 @@ export class MonthlySprintReviewComponent {
       route: '/feature-release',
       theme: 'feature',
       icon: 'calendar'
+    },
+    {
+      title: 'ServiceNow\nTickets',
+      description: 'ServiceNow ticket volume and completion trends across sprints.',
+      route: '/service-now-tickets',
+      theme: 'servicenow',
+      icon: 'ticket'
     },
     {
       title: 'Admin\nData Import',

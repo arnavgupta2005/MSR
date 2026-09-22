@@ -133,3 +133,14 @@ export interface FeatureRelease {
   releasedSprint: number | null;
   delayReason: string | null;
 }
+
+// ---- ServiceNow Tickets (standalone; not linked to the Sprint table) ----
+
+export interface ServiceNowTicket {
+  sprint: number;
+  criticalWeb: number;
+  web: number;
+  criticalMobile: number;
+  mobile: number;
+  completionPercentage: number;
+}

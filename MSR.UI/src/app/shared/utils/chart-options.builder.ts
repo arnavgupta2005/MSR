@@ -424,3 +424,87 @@ export function buildGroupedBarChart(
     }
   };
 }
+
+/**
+ * ServiceNow Tickets combo chart. Four ticket categories are rendered as
+ * separate columns (left axis = ticket count) and Completion % as a dashed
+ * line on a secondary right axis (0-100%). Categories are the sprints.
+ */
+export function buildServiceNowTicketsChart(
+  categories: (string | number)[],
+  criticalWeb: (number | null)[],
+  web: (number | null)[],
+  criticalMobile: (number | null)[],
+  mobile: (number | null)[],
+  completionPct: (number | null)[],
+  height = 380
+): ChartOptions {
+  const ticketColors = ['#16a34a', '#bbf7d0', '#0f5b78', '#bfe4f5'];
+  const completionColor = '#111827';
+
+  return {
+    series: [
+      { name: 'Critical Web', type: 'column', data: criticalWeb },
+      { name: 'Web', type: 'column', data: web },
+      { name: 'Critical Mobile', type: 'column', data: criticalMobile },
+      { name: 'Mobile', type: 'column', data: mobile },
+      { name: 'Completion %', type: 'line', data: completionPct }
+    ] as any,
+    chart: { ...baseChart(height, 'line'), stacked: false } as any,
+    colors: [...ticketColors, completionColor],
+    stroke: { width: [0, 0, 0, 0, 2], curve: 'straight', dashArray: [0, 0, 0, 0, 6] },
+    plotOptions: { bar: { columnWidth: '70%', borderRadius: 2 } },
+    markers: { size: [0, 0, 0, 0, 5], strokeWidth: 0 },
+    dataLabels: {
+      enabled: true,
+      enabledOnSeries: [0, 1, 2, 3, 4],
+      formatter: (val: number, opts: any) =>
+        opts?.seriesIndex === 4
+          ? (val === null || val === undefined ? '' : `${Math.round(val)}%`)
+          : `${val}`,
+      background: {
+        enabled: true,
+        foreColor: '#ffffff',
+        borderWidth: 0,
+        borderRadius: 3,
+        padding: 3,
+        opacity: 1,
+        dropShadow: { enabled: false }
+      },
+      style: {
+        fontSize: '10px',
+        fontFamily: 'Inter, sans-serif',
+        colors: [AXIS_LABEL_COLOR, AXIS_LABEL_COLOR, AXIS_LABEL_COLOR, AXIS_LABEL_COLOR, completionColor]
+      },
+      offsetY: -8
+    },
+    xaxis: {
+      categories,
+      labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '12px', fontFamily: 'Inter, sans-serif' } },
+      axisBorder: { color: GRID_COLOR },
+      axisTicks: { color: GRID_COLOR }
+    },
+    yaxis: [
+      {
+        seriesName: 'Critical Web', min: 0, forceNiceScale: true,
+        title: { text: 'Ticket Count', style: { color: AXIS_LABEL_COLOR, fontSize: '11px', fontWeight: 600 } },
+        labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '11px' } }
+      },
+      { seriesName: 'Web', show: false, min: 0, forceNiceScale: true },
+      { seriesName: 'Critical Mobile', show: false, min: 0, forceNiceScale: true },
+      { seriesName: 'Mobile', show: false, min: 0, forceNiceScale: true },
+      {
+        seriesName: 'Completion %', opposite: true, min: 0, max: 110,
+        title: { text: 'Completion %', style: { color: AXIS_LABEL_COLOR, fontSize: '11px', fontWeight: 600 } },
+        labels: {
+          formatter: (v: number) => (v > 100 ? '' : `${Math.round(v)}%`),
+          style: { colors: AXIS_LABEL_COLOR, fontSize: '11px' }
+        }
+      }
+    ] as any,
+    grid: baseGrid,
+    legend: { ...baseLegend, show: true },
+    tooltip: powerBiTooltip({ percentSeries: ['Completion %'] })
+  };
+}
+

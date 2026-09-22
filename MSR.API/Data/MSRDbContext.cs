@@ -18,6 +18,7 @@ public class MSRDbContext : DbContext
     public DbSet<FeatureRelease> FeatureReleases { get; set; }
     public DbSet<QAPerformance> QAPerformances { get; set; }
     public DbSet<QADailyDelivery> QADailyDeliveries { get; set; }
+    public DbSet<ServiceNowTicket> ServiceNowTickets { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,6 +30,7 @@ public class MSRDbContext : DbContext
         modelBuilder.Entity<FeatureRelease>().ToTable("FeatureRelease");
         modelBuilder.Entity<QAPerformance>().ToTable("QAPerformance");
         modelBuilder.Entity<QADailyDelivery>().ToTable("QADailyDelivery");
+        modelBuilder.Entity<ServiceNowTicket>().ToTable("ServiceNowTickets");
     }
 }
 

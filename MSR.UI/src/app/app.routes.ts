@@ -26,6 +26,12 @@ export const routes: Routes = [
         .then(m => m.FeatureReleaseDashboardComponent)
   },
   {
+    path: 'service-now-tickets',
+    loadComponent: () =>
+      import('./features/service-now/service-now-ticket/service-now-ticket.component')
+        .then(m => m.ServiceNowTicketComponent)
+  },
+  {
     path: 'admin',
     loadComponent: () =>
       import('./features/admin/admin-import/admin-import.component')

@@ -13,6 +13,7 @@ public class AdminImportController : ControllerBase
     private readonly IQAPerformanceImportService _qaPerformanceImport;
     private readonly IQADailyDeliveryImportService _qaDailyDeliveryImport;
     private readonly IFeatureReleaseImportService _featureReleaseImport;
+    private readonly IServiceNowTicketImportService _serviceNowTicketImport;
 
     // Reject oversized uploads early (10 MB is generous for these sheets).
     private const long MaxFileSizeBytes = 10 * 1024 * 1024;
@@ -21,12 +22,14 @@ public class AdminImportController : ControllerBase
         ISprintPerformanceImportService sprintImport,
         IQAPerformanceImportService qaPerformanceImport,
         IQADailyDeliveryImportService qaDailyDeliveryImport,
-        IFeatureReleaseImportService featureReleaseImport)
+        IFeatureReleaseImportService featureReleaseImport,
+        IServiceNowTicketImportService serviceNowTicketImport)
     {
         _sprintImport = sprintImport;
         _qaPerformanceImport = qaPerformanceImport;
         _qaDailyDeliveryImport = qaDailyDeliveryImport;
         _featureReleaseImport = featureReleaseImport;
+        _serviceNowTicketImport = serviceNowTicketImport;
     }
 
     // Validate a Sprint Performance Excel file and return a preview.
@@ -112,6 +115,18 @@ public class AdminImportController : ControllerBase
     public Task<IActionResult> ImportFeatureRelease(IFormFile? file)
         => RunImport(file, _featureReleaseImport.ImportAsync);
 
+    // ---- ServiceNow Tickets ----
+
+    [HttpPost("service-now-ticket/validate")]
+    [RequestSizeLimit(MaxFileSizeBytes)]
+    public Task<IActionResult> ValidateServiceNowTicket(IFormFile? file)
+        => RunValidate(file, "ServiceNow Tickets", _serviceNowTicketImport.ValidateAsync);
+
+    [HttpPost("service-now-ticket")]
+    [RequestSizeLimit(MaxFileSizeBytes)]
+    public Task<IActionResult> ImportServiceNowTicket(IFormFile? file)
+        => RunImport(file, _serviceNowTicketImport.ImportAsync);
+
     // Shared validate handler for the QA import types.
     private async Task<IActionResult> RunValidate(
         IFormFile? file,
@@ -196,6 +211,12 @@ public class AdminImportController : ControllerBase
         "Sprint", "Web/Mobile", "Days", "Delivery", "Product"
     };
 
+    // ServiceNow Tickets columns expected by the importer (6 columns, in order).
+    private static readonly string[] ServiceNowTicketTemplateHeaders =
+    {
+        "Sprint", "CriticalWeb", "Web", "CriticalMobile", "Mobile", "CompletionPercentage"
+    };
+
     [HttpGet("sprint-performance/template")]
     public IActionResult DownloadSprintPerformanceTemplate()
         => BuildTemplate(SprintPerformanceTemplateHeaders, "Sprint Performance", "Sprint_Performance_Template.xlsx");
@@ -215,6 +236,10 @@ public class AdminImportController : ControllerBase
     [HttpGet("qa-daily-delivery/template/infoquest")]
     public IActionResult DownloadQADailyDeliveryInfoQuestTemplate()
         => BuildTemplate(QADailyDeliveryInfoQuestTemplateHeaders, "InfoQuest QA", "InfoQuest_QA_Daily_Delivery_Template.xlsx");
+
+    [HttpGet("service-now-ticket/template")]
+    public IActionResult DownloadServiceNowTicketTemplate()
+        => BuildTemplate(ServiceNowTicketTemplateHeaders, "ServiceNow Tickets", "ServiceNow_Tickets_Template.xlsx");
 
     // Build a header-only .xlsx template from the given column list.
     private static FileContentResult BuildTemplate(string[] headers, string sheetName, string fileName)

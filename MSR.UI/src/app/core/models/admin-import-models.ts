@@ -18,6 +18,11 @@ export interface ImportRowResult {
   featureDescription: string | null;
   plannedSprint: string | null;
   releasedSprint: string | null;
+  criticalWeb: string | null;
+  web: string | null;
+  criticalMobile: string | null;
+  mobile: string | null;
+  completionPercentage: string | null;
   errors: string[];
 }
 

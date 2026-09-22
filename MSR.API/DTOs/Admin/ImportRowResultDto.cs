@@ -32,6 +32,13 @@ namespace MSR.API.DTOs.Admin
         public string? PlannedSprint { get; set; }
         public string? ReleasedSprint { get; set; }
 
+        // ServiceNow ticket identity fields (only populated for that import type).
+        public string? CriticalWeb { get; set; }
+        public string? Web { get; set; }
+        public string? CriticalMobile { get; set; }
+        public string? Mobile { get; set; }
+        public string? CompletionPercentage { get; set; }
+
         public List<string> Errors { get; set; } = new();
     }
 }

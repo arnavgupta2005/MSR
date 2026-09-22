@@ -32,6 +32,7 @@ builder.Services.AddDbContext<MSRDbContext>(options =>
 builder.Services.AddScoped<ISprintPerformanceService, SprintPerformanceService>();
 builder.Services.AddScoped<IQAService, QAService>();
 builder.Services.AddScoped<IFeatureReleaseService, FeatureReleaseService>();
+builder.Services.AddScoped<IServiceNowTicketService, ServiceNowTicketService>();
 
 // Admin Excel import services
 builder.Services.AddScoped<IExcelReaderService, ExcelReaderService>();
@@ -39,6 +40,7 @@ builder.Services.AddScoped<ISprintPerformanceImportService, SprintPerformanceImp
 builder.Services.AddScoped<IQAPerformanceImportService, QAPerformanceImportService>();
 builder.Services.AddScoped<IQADailyDeliveryImportService, QADailyDeliveryImportService>();
 builder.Services.AddScoped<IFeatureReleaseImportService, FeatureReleaseImportService>();
+builder.Services.AddScoped<IServiceNowTicketImportService, ServiceNowTicketImportService>();
 
 
 builder.Services.AddOpenApi();

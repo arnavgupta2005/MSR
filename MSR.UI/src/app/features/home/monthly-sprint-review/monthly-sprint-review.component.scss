@@ -117,6 +117,10 @@
     .icon { background: #efe9fb; color: #7c3aed; }
     .open-report { color: #7c3aed; }
   }
+  &[data-theme='servicenow'] {
+    .icon { background: #e6f6f8; color: #0f5b78; }
+    .open-report { color: #0f5b78; }
+  }
 }
 
 @media (max-width: 900px) {

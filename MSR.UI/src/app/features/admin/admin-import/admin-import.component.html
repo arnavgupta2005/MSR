@@ -151,8 +151,8 @@
         </div>
 
         <div class="alert alert-warn" *ngIf="section.preview.invalidRows > 0">
-          {{ section.preview.invalidRows }} invalid row(s) found. Fix the highlighted rows and
-          re-validate before importing.
+          {{ section.preview.invalidRows }} invalid row(s) found. These rows will be skipped;
+          the valid new rows can still be imported.
         </div>
 
         <div class="preview-actions">

@@ -442,6 +442,19 @@ export function buildServiceNowTicketsChart(
   const ticketColors = ['#16a34a', '#bbf7d0', '#0f5b78', '#bfe4f5'];
   const completionColor = '#111827';
 
+  // Keep the bars in the lower band of the plot so the completion % line and its
+  // labels (on the right axis) sit above the bars and never overlap their values.
+  const allTicketValues = [...criticalWeb, ...web, ...criticalMobile, ...mobile]
+    .filter((v): v is number => v !== null && v !== undefined);
+  const maxTicket = allTicketValues.length ? Math.max(...allTicketValues) : 0;
+  // Round the real data max up to a clean step, then add ~40% headroom so the
+  // completion line stays above the bars. Ticks are derived from this so the
+  // axis always covers the actual values (e.g. 22 -> axis max 35, ticks 0..35).
+  const niceStep = maxTicket <= 10 ? 2 : maxTicket <= 30 ? 5 : 10;
+  const niceMax = Math.max(niceStep, Math.ceil(maxTicket / niceStep) * niceStep);
+  const ticketAxisMax = niceMax + Math.ceil((niceMax * 0.4) / niceStep) * niceStep;
+  const ticketTicks = Math.round(ticketAxisMax / niceStep);
+
   return {
     series: [
       { name: 'Critical Web', type: 'column', data: criticalWeb },
@@ -486,23 +499,26 @@ export function buildServiceNowTicketsChart(
     },
     yaxis: [
       {
-        seriesName: 'Critical Web', min: 0, forceNiceScale: true,
+        seriesName: 'Critical Web', min: 0, max: ticketAxisMax, tickAmount: ticketTicks,
         title: { text: 'Ticket Count', style: { color: AXIS_LABEL_COLOR, fontSize: '11px', fontWeight: 600 } },
-        labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '11px' } }
+        labels: {
+          formatter: (v: number) => `${Math.round(v)}`,
+          style: { colors: AXIS_LABEL_COLOR, fontSize: '11px' }
+        }
       },
-      { seriesName: 'Web', show: false, min: 0, forceNiceScale: true },
-      { seriesName: 'Critical Mobile', show: false, min: 0, forceNiceScale: true },
-      { seriesName: 'Mobile', show: false, min: 0, forceNiceScale: true },
+      { seriesName: 'Web', show: false, min: 0, max: ticketAxisMax, tickAmount: ticketTicks },
+      { seriesName: 'Critical Mobile', show: false, min: 0, max: ticketAxisMax, tickAmount: ticketTicks },
+      { seriesName: 'Mobile', show: false, min: 0, max: ticketAxisMax, tickAmount: ticketTicks },
       {
-        seriesName: 'Completion %', opposite: true, min: 0, max: 110,
+        seriesName: 'Completion %', opposite: true, min: 0, max: 100, tickAmount: 5,
         title: { text: 'Completion %', style: { color: AXIS_LABEL_COLOR, fontSize: '11px', fontWeight: 600 } },
         labels: {
-          formatter: (v: number) => (v > 100 ? '' : `${Math.round(v)}%`),
+          formatter: (v: number) => `${Math.round(v)}%`,
           style: { colors: AXIS_LABEL_COLOR, fontSize: '11px' }
         }
       }
     ] as any,
-    grid: baseGrid,
+    grid: { ...baseGrid, padding: { top: 24 } },
     legend: { ...baseLegend, show: true },
     tooltip: powerBiTooltip({ percentSeries: ['Completion %'] })
   };

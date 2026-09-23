@@ -111,19 +111,13 @@ namespace MSR.API.Services
 
             ApplyCounts(result);
 
-            // Do not partially import: if any row is invalid, import nothing.
-            if (result.InvalidRows > 0)
-            {
-                result.Success = false;
-                result.Message =
-                    $"Import cancelled. {result.InvalidRows} invalid row(s) must be fixed before importing.";
-                return result;
-            }
-
+            // Invalid rows are skipped; the valid new rows are still imported.
             if (toInsert.Count == 0)
             {
                 result.Success = true;
-                result.Message = "No new records to import. All rows already exist.";
+                result.Message = result.InvalidRows > 0
+                    ? $"No new records were imported. {result.InvalidRows} invalid row(s) were skipped."
+                    : "No new records to import. All rows already exist.";
                 // Import history recording deferred - to be implemented later.
                 return result;
             }
@@ -146,7 +140,9 @@ namespace MSR.API.Services
 
             result.Success = true;
             result.InsertedRows = toInsert.Count;
-            result.Message = $"Successfully imported {toInsert.Count} new record(s).";
+            result.Message = result.InvalidRows > 0
+                ? $"Successfully imported {toInsert.Count} new record(s). {result.InvalidRows} invalid row(s) were skipped."
+                : $"Successfully imported {toInsert.Count} new record(s).";
 
             // Import history recording deferred - to be implemented later.
             return result;

@@ -41,7 +41,7 @@ export class MonthlySprintReviewComponent {
       icon: 'calendar'
     },
     {
-      title: 'ServiceNow\nTickets',
+      title: 'ServiceNow\nTickets (IQ)',
       description: 'ServiceNow ticket volume and completion trends across sprints.',
       route: '/service-now-tickets',
       theme: 'servicenow',

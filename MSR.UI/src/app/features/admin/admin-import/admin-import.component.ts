@@ -105,7 +105,7 @@ export class AdminImportComponent {
     },
     {
       key: 'service-now-ticket',
-      title: 'ServiceNow Tickets',
+      title: 'ServiceNow Tickets (IQ)',
       description:
         'Upload ServiceNow ticket data (critical/web/mobile counts and completion percentage) per sprint.',
       columns: [
@@ -289,7 +289,6 @@ export class AdminImportComponent {
     return (
       !!section.preview &&
       section.preview.fileErrors.length === 0 &&
-      section.preview.invalidRows === 0 &&
       section.preview.newRows > 0
     );
   }

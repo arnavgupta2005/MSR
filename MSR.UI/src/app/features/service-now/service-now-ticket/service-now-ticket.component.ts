@@ -54,8 +54,15 @@ export class ServiceNowTicketComponent implements OnInit {
     this.load();
   }
 
-  // Load chart data for the current selection (empty selection = all records).
+  // Load chart data for the current selection. With no sprints selected there
+  // is nothing to show, so render the empty state instead of all records.
   load(): void {
+    if (this.selectedSprints.length === 0) {
+      this.state = 'empty';
+      this.chart = { state: 'empty', options: null };
+      return;
+    }
+
     this.state = 'loading';
     this.chart = { state: 'loading', options: null };
 

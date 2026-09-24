@@ -303,7 +303,10 @@ export class DevelopmentDashboardComponent implements OnInit {
           ],
           panels: grouped.map(g => ({
             title: g.group,
-            options: buildPanelLineChart(g.sprints.map(sp => `Sprint ${sp}`), g.series, colors, 150, g.group)
+            options: buildPanelLineChart(
+              g.sprints.map(sp => `Sprint ${sp}`), g.series, colors, 150, g.group, false,
+              { seriesName: 'Headcount', min: 0, max: 10, tickAmount: 2, title: 'Headcount', leftTitle: 'Actual Velocity' }
+            )
           }))
         };
       });

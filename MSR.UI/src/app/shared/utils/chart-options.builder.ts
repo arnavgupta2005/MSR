@@ -247,8 +247,43 @@ export function buildPanelLineChart(
   colors: string[],
   height = 150,
   headerGroup = '',
-  compactTooltip = false
+  compactTooltip = false,
+  rightAxis?: { seriesName: string; min?: number; max?: number; tickAmount?: number; title?: string; leftTitle?: string }
 ): ChartOptions {
+  // When a right-hand axis is requested, give every series its own axis entry so
+  // the requested series can be plotted on an opposite scale (e.g. Headcount 1-10)
+  // while the remaining series share the primary left axis.
+  const leftSeriesName = series.find(x => x.name !== rightAxis?.seriesName)?.name;
+  const yaxis = rightAxis
+    ? series.map(s =>
+        s.name === rightAxis.seriesName
+          ? {
+              seriesName: rightAxis.seriesName,
+              opposite: true,
+              min: rightAxis.min ?? 0,
+              max: rightAxis.max,
+              tickAmount: rightAxis.tickAmount,
+              forceNiceScale: rightAxis.tickAmount === undefined,
+              title: rightAxis.title
+                ? { text: rightAxis.title, style: { color: AXIS_LABEL_COLOR, fontSize: '10px', fontWeight: 600 } }
+                : undefined,
+              labels: {
+                formatter: (v: number) => `${Math.round(v)}`,
+                style: { colors: AXIS_LABEL_COLOR, fontSize: '10px', fontFamily: 'Inter, sans-serif' }
+              }
+            }
+          : {
+              seriesName: leftSeriesName ?? s.name,
+              show: s.name === leftSeriesName,
+              min: 0,
+              title: rightAxis.leftTitle
+                ? { text: rightAxis.leftTitle, style: { color: AXIS_LABEL_COLOR, fontSize: '10px', fontWeight: 600 } }
+                : undefined,
+              labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '10px', fontFamily: 'Inter, sans-serif' } }
+            }
+      )
+    : { labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '10px', fontFamily: 'Inter, sans-serif' } } };
+
   return {
     series,
     chart: { ...baseChart(height, 'line'), sparkline: { enabled: false } } as any,
@@ -263,7 +298,7 @@ export function buildPanelLineChart(
       axisTicks: { color: GRID_COLOR },
       crosshairs: { show: true, stroke: { color: '#94a3b8', width: 1, dashArray: 4 } }
     },
-    yaxis: { labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '10px', fontFamily: 'Inter, sans-serif' } } },
+    yaxis: yaxis as any,
     grid: baseGrid,
     legend: { show: false },
     tooltip: powerBiTooltip({ headerGroup, compact: compactTooltip })

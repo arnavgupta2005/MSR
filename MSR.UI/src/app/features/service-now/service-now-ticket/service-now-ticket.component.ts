@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-import { SprintOption, SPRINT_OPTIONS } from '../../../core/config/report.config';
+import { SprintOption, SPRINT_OPTIONS, DEFAULT_PERFORMANCE_SPRINTS } from '../../../core/config/report.config';
 import { ServiceNowTicket } from '../../../core/models/api-models';
 import { ServiceNowTicketService } from '../../../core/services/service-now-ticket.service';
 
@@ -35,7 +35,7 @@ export class ServiceNowTicketComponent implements OnInit {
 
   // Fixed sprint options (Sprint 1 to 25).
   sprintOptions: SprintOption[] = SPRINT_OPTIONS;
-  selectedSprints: number[] = [4, 5, 6, 7, 8];
+  selectedSprints: number[] = [...DEFAULT_PERFORMANCE_SPRINTS];
 
   state: LoadState = 'loading';
   chart: { state: ChartState; options: ChartOptions | null } = { state: 'loading', options: null };

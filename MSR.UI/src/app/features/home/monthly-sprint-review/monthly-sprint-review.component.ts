@@ -20,6 +20,13 @@ interface ReportCard {
 export class MonthlySprintReviewComponent {
   readonly reports: ReportCard[] = [
     {
+      title: 'Feature Release\nMSR Report',
+      description: 'Planned vs actual feature releases and reasons for delay.',
+      route: '/feature-release',
+      theme: 'feature',
+      icon: 'calendar'
+    },
+    {
       title: 'Development\nMSR Report',
       description: 'Sprint performance, velocity and completion trends across development teams.',
       route: '/development',
@@ -32,13 +39,6 @@ export class MonthlySprintReviewComponent {
       route: '/qa',
       theme: 'qa',
       icon: 'shield'
-    },
-    {
-      title: 'Feature Release\nMSR Report',
-      description: 'Planned vs actual feature releases and reasons for delay.',
-      route: '/feature-release',
-      theme: 'feature',
-      icon: 'calendar'
     },
     {
       title: 'ServiceNow\nTickets (IQ)',

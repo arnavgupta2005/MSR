@@ -7,6 +7,7 @@ import { catchError } from 'rxjs/operators';
 import {
   DEVELOPMENT_PRODUCTS,
   DEFAULT_PERFORMANCE_SPRINTS,
+  DEFAULT_KPI_SPRINTS,
   MAX_PERFORMANCE_SPRINTS
 } from '../../../core/config/report.config';
 import { SprintPerformanceKpi } from '../../../core/models/api-models';
@@ -84,7 +85,7 @@ export class DevelopmentDashboardComponent implements OnInit {
 
   // ---- state ----
   selectedProductId = DEVELOPMENT_PRODUCTS[0].id;
-  selectedKpiSprints: number[] = [10];
+  selectedKpiSprints: number[] = [...DEFAULT_KPI_SPRINTS];
   selectedPerfSprints: number[] = [...DEFAULT_PERFORMANCE_SPRINTS];
 
   // ---- KPI ----

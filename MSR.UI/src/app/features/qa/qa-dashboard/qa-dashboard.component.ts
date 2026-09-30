@@ -7,6 +7,7 @@ import { catchError } from 'rxjs/operators';
 import {
   QA_PRODUCTS,
   DEFAULT_PERFORMANCE_SPRINTS,
+  DEFAULT_KPI_SPRINTS,
   MAX_PERFORMANCE_SPRINTS
 } from '../../../core/config/report.config';
 import { QaKpi } from '../../../core/models/api-models';
@@ -64,7 +65,7 @@ export class QaDashboardComponent implements OnInit {
   readonly maxPerfSprints = MAX_PERFORMANCE_SPRINTS;
 
   selectedProductId = QA_PRODUCTS[0].id;
-  selectedKpiSprints: number[] = [10];
+  selectedKpiSprints: number[] = [...DEFAULT_KPI_SPRINTS];
   selectedPerfSprints: number[] = [...DEFAULT_PERFORMANCE_SPRINTS];
 
   kpiState: LoadState = 'loading';

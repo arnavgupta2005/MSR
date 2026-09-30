@@ -67,13 +67,19 @@ export class FeatureReleaseDashboardComponent implements OnInit {
   // AND whose actual sprint is selected. An empty filter imposes no constraint
   // from that side, so both empty shows all rows.
   get filteredRows(): FeatureRelease[] {
-    return this.rows.filter(r => {
-      const plannedOk = this.selectedPlanned.length === 0 ||
-        (r.plannedSprint !== null && this.selectedPlanned.includes(r.plannedSprint));
-      const actualOk = this.selectedActual.length === 0 ||
-        (r.releasedSprint !== null && this.selectedActual.includes(r.releasedSprint));
-      return plannedOk && actualOk;
-    });
+    return this.rows
+      .filter(r => {
+        const plannedOk = this.selectedPlanned.length === 0 ||
+          (r.plannedSprint !== null && this.selectedPlanned.includes(r.plannedSprint));
+        const actualOk = this.selectedActual.length === 0 ||
+          (r.releasedSprint !== null && this.selectedActual.includes(r.releasedSprint));
+        return plannedOk && actualOk;
+      })
+      // Default order: latest sprints first (descending by released, then planned).
+      .sort((a, b) =>
+        (b.releasedSprint ?? 0) - (a.releasedSprint ?? 0) ||
+        (b.plannedSprint ?? 0) - (a.plannedSprint ?? 0)
+      );
   }
 
   load(): void {

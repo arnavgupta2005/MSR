@@ -75,5 +75,8 @@ export const DEFAULT_SPRINT_RANGE = SPRINT_RANGE_OPTIONS[3]; // Sprint 10 - 13
 export const MAX_PERFORMANCE_SPRINTS = 5;
 export const MIN_PERFORMANCE_SPRINTS = 1;
 
-// Default sprints selected on first load (mirrors the old Sprint 10 - 13 range).
-export const DEFAULT_PERFORMANCE_SPRINTS: number[] = [10, 11, 12, 13];
+// Default sprints selected on first load (Sprint 14 - 18).
+export const DEFAULT_PERFORMANCE_SPRINTS: number[] = [14, 15, 16, 17, 18];
+
+// Default KPI sprints selected on first load (Sprint 14 - 18).
+export const DEFAULT_KPI_SPRINTS: number[] = [14, 15, 16, 17, 18];

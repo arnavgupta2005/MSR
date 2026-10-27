@@ -28,10 +28,10 @@ const baseLegend = {
   fontSize: '12px'
 };
 
-// Consistent enterprise palette (teams / series).
+// Distinct categorical colors keep adjacent teams and series easy to compare.
 export const SERIES_COLORS = [
-  '#2563eb', '#7c3aed', '#ea8a2b', '#0ea5b5',
-  '#dc2626', '#16a34a', '#db2777', '#0891b2'
+  '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+  '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'
 ];
 
 /** Y-axis title helper. */
@@ -325,7 +325,7 @@ export function buildComboCompletionChart(
       { name: 'Completed Points', type: 'line', data: completed }
     ] as any,
     chart: { ...baseChart(height, 'line'), stacked: false } as any,
-    colors: ['#93c5fd', '#ea8a2b', '#16a34a'],
+    colors: [SERIES_COLORS[4], SERIES_COLORS[1], SERIES_COLORS[2]],
     stroke: { width: [0, 3, 3], curve: 'smooth' },
     plotOptions: { bar: { columnWidth: '55%', borderRadius: 2 } },
     markers: { size: 3, strokeWidth: 0 },
@@ -474,7 +474,7 @@ export function buildServiceNowTicketsChart(
   completionPct: (number | null)[],
   height = 380
 ): ChartOptions {
-  const ticketColors = ['#16a34a', '#bbf7d0', '#0f5b78', '#bfe4f5'];
+  const ticketColors = SERIES_COLORS.slice(0, 4);
   const completionColor = '#111827';
 
   // Keep the bars in the lower band of the plot so the completion % line and its

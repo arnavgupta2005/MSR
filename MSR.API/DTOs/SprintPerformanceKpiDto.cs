@@ -19,5 +19,7 @@
         public int? DeliveredItems { get; set; }
 
         public double? CompletionPercentage { get; set; }
+
+        public int? Headcount { get; set; }
     }
 }

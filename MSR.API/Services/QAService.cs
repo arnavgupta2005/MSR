@@ -25,6 +25,11 @@ namespace MSR.API.Services
                     q.ProductAreaId == filter.ProductAreaId &&
                     filter.SprintIds.Contains(q.SprintId));
 
+            var headcount = await performanceQuery
+                .Select(q => q.EmployeeId)
+                .Distinct()
+                .CountAsync();
+
             return new QAKpiDto
             {
                 Capacity = await performanceQuery
@@ -40,7 +45,9 @@ namespace MSR.API.Services
                     .SumAsync(q => (int?)q.QARolloverPoints) ?? 0,
 
                 Observations = await performanceQuery
-                    .SumAsync(q => (int?)q.QAObservations) ?? 0
+                    .SumAsync(q => (int?)q.QAObservations) ?? 0,
+
+                Headcount = headcount
             };
         }
 

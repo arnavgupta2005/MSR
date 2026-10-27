@@ -38,7 +38,8 @@ namespace MSR.API.Services
                     RolloverPoints = null,
                     PlannedItems = null,
                     DeliveredItems = null,
-                    CompletionPercentage = null
+                    CompletionPercentage = null,
+                    Headcount = null
                 };
             }
 
@@ -50,6 +51,7 @@ namespace MSR.API.Services
             var rolloverPoints = data.Sum(x => x.RolloverPoints ?? 0);
             var plannedItems = data.Sum(x => x.PlannedItems ?? 0);
             var deliveredItems = data.Sum(x => x.DeliveredItems ?? 0);
+            var headcount = data.Select(x => x.EmployeeId).Distinct().Count();
 
             var completionPercentage = assignedPoints == 0
                 ? 0
@@ -67,7 +69,8 @@ namespace MSR.API.Services
                 RolloverPoints = rolloverPoints,
                 PlannedItems = plannedItems,
                 DeliveredItems = deliveredItems,
-                CompletionPercentage = completionPercentage
+                CompletionPercentage = completionPercentage,
+                Headcount = headcount
             };
         }
 

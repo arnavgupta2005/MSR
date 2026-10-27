@@ -15,6 +15,7 @@ export interface SprintPerformanceKpi {
   plannedItems: number | null;
   deliveredItems: number | null;
   completionPercentage: number | null;
+  headcount: number | null;
 }
 
 export interface VelocityTrend {
@@ -102,6 +103,7 @@ export interface QaKpi {
   rollovers: number;
   rolloverPoints: number;
   observations: number;
+  headcount: number;
 }
 
 export interface QaRolloverTrend {

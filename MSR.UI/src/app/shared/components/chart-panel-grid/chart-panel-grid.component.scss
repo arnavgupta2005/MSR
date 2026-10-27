@@ -44,6 +44,28 @@
   .panel-card-body { flex: 1; min-width: 0; }
 }
 
+.chart-view-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(2px);
+}
+
+.view-button {
+  flex: 0 0 auto;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+
+  &:hover { border-color: var(--color-primary); color: var(--color-primary); }
+  &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+}
+
 // Internal scroll grid of small-multiple tiles.
 .panel-scroll {
   display: grid;
@@ -75,6 +97,7 @@
     padding-right: 0;
     padding-bottom: var(--space-2);
   }
+
 }
 
 .panel-tile {
@@ -86,13 +109,36 @@
   padding: var(--space-3);
   background: var(--color-surface-alt);
 
+  &.expanded {
+    position: fixed;
+    inset: 16px;
+    z-index: 1001;
+    min-height: 0;
+    padding: var(--space-6);
+    background: var(--color-surface);
+    overflow: auto;
+  }
+
+  .panel-tile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: 34px;
+  }
+
   .panel-tile-title {
     font-size: var(--fs-xs);
     font-weight: 700;
     color: var(--color-navy);
-    margin-bottom: var(--space-1);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  &.expanded .panel-tile-title { font-size: var(--fs-base); }
+}
+
+@media (max-width: 600px) {
+  .panel-tile.expanded { inset: 8px; padding: var(--space-4); }
 }

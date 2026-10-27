@@ -4,7 +4,21 @@
   padding: var(--space-5);
   height: 100%;
 
+  &.expanded {
+    position: fixed;
+    inset: 16px;
+    z-index: 1001;
+    height: auto;
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    padding: var(--space-6);
+  }
+
   .chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
     margin-bottom: var(--space-2);
 
     h3 {
@@ -27,6 +41,8 @@
   .chart-body {
     flex: 1;
     min-height: 240px;
+
+    .expanded & { min-height: min(68vh, 640px); }
   }
 
   // Internal horizontal scroll for dense category charts (e.g. many employees).
@@ -59,4 +75,30 @@
       &::-webkit-scrollbar-track { background: transparent; }
     }
   }
+}
+
+.chart-view-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(2px);
+}
+
+.view-button {
+  flex: 0 0 auto;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+
+  &:hover { border-color: var(--color-primary); color: var(--color-primary); }
+  &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+}
+
+@media (max-width: 600px) {
+  .chart-card.expanded { inset: 8px; padding: var(--space-4); }
 }

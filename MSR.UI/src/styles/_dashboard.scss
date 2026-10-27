@@ -27,6 +27,35 @@
   }
 }
 
+.dashboard-tabs {
+  display: flex;
+  gap: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-5);
+
+  button {
+    border: 0;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    padding: var(--space-3) 2px;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    white-space: nowrap;
+
+    &:hover { color: var(--color-primary); }
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 3px;
+    }
+    &.active {
+      border-bottom-color: var(--color-primary);
+      color: var(--color-navy);
+    }
+  }
+}
+
 .inline-label {
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -95,4 +124,5 @@
 
 @media (max-width: 520px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-tabs { gap: var(--space-5); }
 }

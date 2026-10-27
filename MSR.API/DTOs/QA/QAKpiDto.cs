@@ -12,5 +12,7 @@
         public int RolloverPoints { get; set; }
 
         public int Observations { get; set; }
+
+        public int Headcount { get; set; }
     }
 }

@@ -20,8 +20,18 @@
     </app-product-selector>
   </div>
 
+  <nav class="dashboard-tabs" role="tablist" aria-label="Dashboard sections">
+    <button type="button" role="tab" id="qa-kpi-tab" aria-controls="qa-kpi-panel"
+      [attr.aria-selected]="activeDashboardTab === 'kpi'" [class.active]="activeDashboardTab === 'kpi'"
+      (click)="activeDashboardTab = 'kpi'">KPI Summary</button>
+    <button type="button" role="tab" id="qa-performance-tab" aria-controls="qa-performance-panel"
+      [attr.aria-selected]="activeDashboardTab === 'performance'" [class.active]="activeDashboardTab === 'performance'"
+      (click)="activeDashboardTab = 'performance'">Performance Report</button>
+  </nav>
+
   <!-- KPI Summary -->
-  <app-dashboard-section title="KPI Summary" [index]="1">
+  <app-dashboard-section *ngIf="activeDashboardTab === 'kpi'" id="qa-kpi-panel" role="tabpanel"
+    aria-labelledby="qa-kpi-tab" tabindex="0" title="KPI Summary" [index]="1">
     <div filter class="kpi-filter">
       <span class="inline-label">KPI Filter</span>
       <app-sprint-multi-select
@@ -53,11 +63,15 @@
       <app-kpi-card label="Observations" [value]="kpi.observations" theme="red">
         <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path></svg>
       </app-kpi-card>
+      <app-kpi-card label="QA Headcount" [value]="kpi.headcount" theme="blue">
+        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </app-kpi-card>
     </div>
   </app-dashboard-section>
 
   <!-- Performance Report -->
-  <app-dashboard-section title="Performance Report" [index]="2">
+  <app-dashboard-section *ngIf="activeDashboardTab === 'performance'" id="qa-performance-panel"
+    role="tabpanel" aria-labelledby="qa-performance-tab" tabindex="0" title="Performance Report" [index]="2">
     <div filter class="range-filter">
       <span class="inline-label">Sprint Filter</span>
       <app-sprint-multi-select
@@ -69,13 +83,13 @@
 
     <div class="chart-grid qa-charts">
       <app-chart-card class="span-5" [index]="1" title="QA Rollover Trend" subtitle="Rollover Points"
-        [state]="rollover.state" [options]="rollover.options" (retry)="loadCharts()"></app-chart-card>
+        [state]="rollover.state" [options]="rollover.options" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
       <app-chart-card class="span-7" [index]="2" title="Story Points Tested" subtitle="QA-wise · Sum of Story Points Tested"
         [state]="storyPoints.state" [options]="storyPoints.options" [chartHeight]="storyPointsChartHeight"
-        [scrollMinHeight]="storyPointsMinHeight" (retry)="loadCharts()"></app-chart-card>
+        [scrollMinHeight]="storyPointsMinHeight" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
       <app-chart-card class="span-12" [index]="3" title="Daily Delivery Trend" subtitle="Delivered Points"
         [state]="delivery.state" [options]="delivery.options" [chartHeight]="320"
-        (retry)="loadCharts()"></app-chart-card>
+        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
     </div>
   </app-dashboard-section>
 </div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { ChartOptions, ChartState } from '../chart-card/chart-card.component';
 import { LoadingStateComponent } from '../loading-state/loading-state.component';
@@ -27,6 +27,7 @@ export interface ChartPanel {
     ErrorStateComponent
   ],
   template: `
+    <div class="chart-view-backdrop" *ngIf="expandedPanel" (click)="closeView()" aria-hidden="true"></div>
     <div class="panel-card card" [class.span-2]="span === 2">
       <header class="panel-card-header">
         <h3>
@@ -47,11 +48,20 @@ export interface ChartPanel {
         <div class="panel-scroll" *ngIf="state === 'ready'"
              [class.horizontal]="horizontal"
              [style.--panel-min.px]="panelMinWidth">
-          <div class="panel-tile" *ngFor="let p of panels">
-            <span class="panel-tile-title" [title]="p.title">{{ p.title }}</span>
+          <div class="panel-tile" *ngFor="let p of panels" [class.expanded]="expandedPanel === p"
+               [attr.role]="expandedPanel === p ? 'dialog' : null"
+               [attr.aria-modal]="expandedPanel === p ? 'true' : null"
+               [attr.aria-label]="expandedPanel === p ? p.title : null">
+            <div class="panel-tile-header">
+              <span class="panel-tile-title" [title]="p.title">{{ p.title }}</span>
+              <button *ngIf="viewEnabled" type="button" class="view-button"
+                      [attr.aria-expanded]="expandedPanel === p" (click)="toggleView(p)">
+                {{ expandedPanel === p ? 'Close view' : 'View' }}
+              </button>
+            </div>
             <apx-chart
               [series]="p.options.series"
-              [chart]="p.options.chart"
+              [chart]="renderedOptions(p.options).chart"
               [xaxis]="p.options.xaxis!"
               [yaxis]="p.options.yaxis!"
               [dataLabels]="p.options.dataLabels!"
@@ -82,5 +92,32 @@ export class ChartPanelGridComponent {
   /** When true, tiles lay out in 2 rows and scroll horizontally (2x2 view). */
   @Input() horizontal = false;
   @Input() emptyMessage = 'No data available for the selected range.';
+  @Input() viewEnabled = false;
   @Output() retry = new EventEmitter<void>();
+
+  expandedPanel: ChartPanel | null = null;
+  private readonly expandedOptionsCache = new WeakMap<ChartOptions, ChartOptions>();
+
+  renderedOptions(options: ChartOptions): ChartOptions {
+    if (this.expandedPanel?.options !== options) { return options; }
+    const cached = this.expandedOptionsCache.get(options);
+    if (cached) { return cached; }
+    const height = typeof window === 'undefined' ? 520 : Math.max(320, Math.floor(window.innerHeight * 0.72));
+    const expandedOptions = { ...options, chart: { ...options.chart, height } };
+    this.expandedOptionsCache.set(options, expandedOptions);
+    return expandedOptions;
+  }
+
+  toggleView(panel: ChartPanel): void {
+    this.expandedPanel = this.expandedPanel === panel ? null : panel;
+  }
+
+  closeView(): void {
+    this.expandedPanel = null;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeView();
+  }
 }

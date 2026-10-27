@@ -55,6 +55,8 @@ export const SPRINT_OPTIONS: SprintOption[] = Array.from(
   (_, i) => ({ sprintNumber: i + 1, label: `Sprint ${i + 1}` })
 );
 
+export const ALL_SPRINTS: number[] = SPRINT_OPTIONS.map(sprint => sprint.sprintNumber);
+
 // ---- Predefined performance ranges ----
 export const SPRINT_RANGE_OPTIONS: SprintRangeOption[] = [
   { label: 'Sprint 1', startSprint: 1, endSprint: 1 },
@@ -72,11 +74,11 @@ export const DEFAULT_SPRINT_RANGE = SPRINT_RANGE_OPTIONS[3]; // Sprint 10 - 13
 // ---- Custom Performance Report sprint filter ----
 // Users pick specific sprints (not a contiguous range). Bounded to keep the
 // per-sprint charts readable.
-export const MAX_PERFORMANCE_SPRINTS = 5;
+export const MAX_PERFORMANCE_SPRINTS = TOTAL_SPRINTS;
 export const MIN_PERFORMANCE_SPRINTS = 1;
 
-// Default sprints selected on first load (Sprint 14 - 18).
+// Default sprint selection for the ServiceNow tickets report.
 export const DEFAULT_PERFORMANCE_SPRINTS: number[] = [14, 15, 16, 17, 18];
 
-// Default KPI sprints selected on first load (Sprint 14 - 18).
-export const DEFAULT_KPI_SPRINTS: number[] = [14, 15, 16, 17, 18];
+// Default KPI selection for Development and QA dashboards.
+export const DEFAULT_KPI_SPRINTS: number[] = [...ALL_SPRINTS];

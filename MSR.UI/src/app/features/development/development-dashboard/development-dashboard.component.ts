@@ -5,8 +5,8 @@ import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import {
+  ALL_SPRINTS,
   DEVELOPMENT_PRODUCTS,
-  DEFAULT_PERFORMANCE_SPRINTS,
   DEFAULT_KPI_SPRINTS,
   MAX_PERFORMANCE_SPRINTS
 } from '../../../core/config/report.config';
@@ -85,8 +85,9 @@ export class DevelopmentDashboardComponent implements OnInit {
 
   // ---- state ----
   selectedProductId = DEVELOPMENT_PRODUCTS[0].id;
+  activeDashboardTab: 'kpi' | 'performance' = 'kpi';
   selectedKpiSprints: number[] = [...DEFAULT_KPI_SPRINTS];
-  selectedPerfSprints: number[] = [...DEFAULT_PERFORMANCE_SPRINTS];
+  selectedPerfSprints: number[] = [...ALL_SPRINTS];
 
   // ---- KPI ----
   kpiState: LoadState = 'loading';
@@ -189,7 +190,7 @@ export class DevelopmentDashboardComponent implements OnInit {
               { name: 'Actual Velocity', data: sorted.map(r => r.actualVelocity) },
               { name: 'Trailing Velocity', data: sorted.map(r => r.trailingVelocity) }
             ],
-            ['#2563eb', '#7c3aed'], 260, 'Velocity'
+            [SERIES_COLORS[0], SERIES_COLORS[3]], 260, 'Velocity'
           )
         };
       });
@@ -200,7 +201,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       .subscribe(rows => {
         if (rows === null) { this.teamVelocity = { state: 'error', panels: [], legend: [] }; return; }
         if (rows.length === 0) { this.teamVelocity = { state: 'empty', panels: [], legend: [] }; return; }
-        const colors = ['#2563eb', '#ea8a2b', '#7c3aed'];
+        const colors = [SERIES_COLORS[0], SERIES_COLORS[1], SERIES_COLORS[2]];
         const grouped = panelsByGroup(rows, r => r.teamName, [
           { name: 'Actual Velocity', value: r => r.actualVelocity },
           { name: 'Capacity', value: r => r.capacity },
@@ -232,7 +233,7 @@ export class DevelopmentDashboardComponent implements OnInit {
           options: buildLineChart(
             categories.map(c => `Sprint ${c}`),
             [{ name: 'Rollover Points', data }],
-            ['#ea8a2b'], 260, 'Rollover Points'
+            [SERIES_COLORS[3]], 260, 'Rollover Points'
           )
         };
       });
@@ -255,9 +256,9 @@ export class DevelopmentDashboardComponent implements OnInit {
         this.teamCompletion = {
           state: 'ready',
           legend: [
-            { name: 'Completion %', color: '#93c5fd' },
-            { name: 'Committed Points', color: '#ea8a2b' },
-            { name: 'Completed Points', color: '#16a34a' }
+            { name: 'Completion %', color: SERIES_COLORS[4] },
+            { name: 'Committed Points', color: SERIES_COLORS[1] },
+            { name: 'Completed Points', color: SERIES_COLORS[2] }
           ],
           panels: grouped.map(g => ({
             title: g.group,
@@ -291,7 +292,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       .subscribe(rows => {
         if (rows === null) { this.velocityHeadcount = { state: 'error', panels: [], legend: [] }; return; }
         if (rows.length === 0) { this.velocityHeadcount = { state: 'empty', panels: [], legend: [] }; return; }
-        const colors = ['#2563eb', '#0f2545'];
+        const colors = [SERIES_COLORS[0], SERIES_COLORS[1]];
         const grouped = panelsByGroup(rows, r => r.teamName, [
           { name: 'Actual Velocity', value: r => r.actualVelocity },
           { name: 'Headcount', value: r => r.headcount }
@@ -318,7 +319,7 @@ export class DevelopmentDashboardComponent implements OnInit {
       .subscribe(rows => {
         if (rows === null) { this.resourceVelocity = { state: 'error', panels: [], legend: [] }; return; }
         if (rows.length === 0) { this.resourceVelocity = { state: 'empty', panels: [], legend: [] }; return; }
-        const colors = ['#2563eb', '#16a34a', '#ea8a2b', '#7c3aed'];
+        const colors = [SERIES_COLORS[0], SERIES_COLORS[2], SERIES_COLORS[1], SERIES_COLORS[4]];
         const grouped = panelsByGroup(rows, r => r.employeeName, [
           { name: 'Actual Velocity', value: r => r.actualVelocity },
           { name: 'Assigned Points', value: r => r.assignedPoints },
@@ -349,8 +350,8 @@ export class DevelopmentDashboardComponent implements OnInit {
         const { categories, series } = pivotByGroupAndSprint(
           rows, r => r.employeeName, r => Math.round(r.completionPercentage * 100) / 100
         );
-        // Enable internal horizontal scroll only when there are many employees.
-        this.resourceCompletionMinWidth = categories.length > 8 ? categories.length * 80 : 0;
+        // Give each employee enough width for the grouped sprint bars and labels.
+        this.resourceCompletionMinWidth = categories.length > 5 ? categories.length * 220 : 0;
         const opts = buildGroupedBarChart(
           categories, series, SERIES_COLORS, 320, true, 'Employee', 'Completion %'
         );

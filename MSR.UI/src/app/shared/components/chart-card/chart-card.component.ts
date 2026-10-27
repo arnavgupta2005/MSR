@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import {
   ApexAxisChartSeries,
   ApexNonAxisChartSeries,
@@ -50,12 +50,19 @@ export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
     ErrorStateComponent
   ],
   template: `
-    <div class="chart-card card">
+    <div class="chart-view-backdrop" *ngIf="expanded" (click)="closeView()" aria-hidden="true"></div>
+    <div class="chart-card card" [class.expanded]="expanded"
+         [attr.role]="expanded ? 'dialog' : null" [attr.aria-modal]="expanded ? 'true' : null"
+         [attr.aria-label]="expanded ? title : null">
       <header class="chart-header">
         <h3>
           <span *ngIf="index" class="index">{{ index }}.</span> {{ title }}
           <span *ngIf="subtitle" class="subtitle">({{ subtitle }})</span>
         </h3>
+        <button *ngIf="viewEnabled && state === 'ready'" type="button" class="view-button"
+                [attr.aria-expanded]="expanded" (click)="toggleView()">
+          {{ expanded ? 'Close view' : 'View' }}
+        </button>
       </header>
 
       <div class="chart-body">
@@ -76,7 +83,7 @@ export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
                [style.height.px]="scrollMinHeight > 0 ? scrollMinHeight : null">
             <apx-chart
               [series]="options.series"
-              [chart]="options.chart"
+              [chart]="renderedChart"
               [xaxis]="options.xaxis!"
               [yaxis]="options.yaxis!"
               [dataLabels]="options.dataLabels!"
@@ -110,4 +117,33 @@ export class ChartCardComponent {
   @Input() scrollMinWidth = 0;
   /** When > 0, enables internal vertical scroll and fixes the inner chart height (px). */
   @Input() scrollMinHeight = 0;
+  @Input() viewEnabled = false;
+
+  expanded = false;
+  private expandedChartSource: ApexChart | null = null;
+  private expandedChartValue: ApexChart | null = null;
+
+  get renderedChart(): ApexChart {
+    const chart = this.options?.chart;
+    if (!chart || !this.expanded) { return chart!; }
+    if (chart !== this.expandedChartSource) {
+      const height = typeof window === 'undefined' ? 520 : Math.max(320, Math.floor(window.innerHeight * 0.68));
+      this.expandedChartSource = chart;
+      this.expandedChartValue = { ...chart, height };
+    }
+    return this.expandedChartValue!;
+  }
+
+  toggleView(): void {
+    this.expanded = !this.expanded;
+  }
+
+  closeView(): void {
+    this.expanded = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeView();
+  }
 }

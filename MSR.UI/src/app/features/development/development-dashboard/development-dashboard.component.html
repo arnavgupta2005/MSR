@@ -131,10 +131,19 @@
         [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
 
       <!-- 8. Resource Completion Trends -->
-      <app-chart-card class="span-12" [index]="8" title="Resource Completion Trends"
-        [state]="resourceCompletion.state" [options]="resourceCompletion.options" [chartHeight]="320"
-        [scrollMinWidth]="resourceCompletionMinWidth" [viewEnabled]="true"
-        (retry)="loadCharts()"></app-chart-card>
+      <app-chart-panel-grid class="span-12" [index]="8" title="Resource Completion Trends"
+        [state]="resourceCompletion.state" [panels]="resourceCompletion.panels" [legend]="resourceCompletion.legend"
+        [panelMinWidth]="280" [horizontal]="true" [viewEnabled]="true"
+        (retry)="loadCharts()">
+        <div filter class="resource-team-filter" *ngIf="resourceCompletionTeams.length">
+          <label for="resource-completion-team">Team</label>
+          <select id="resource-completion-team" class="form-select"
+            [value]="selectedResourceCompletionTeamId"
+            (change)="onResourceCompletionTeamChange($event)">
+            <option *ngFor="let team of resourceCompletionTeams" [value]="team.id">{{ team.name }}</option>
+          </select>
+        </div>
+      </app-chart-panel-grid>
     </div>
   </app-dashboard-section>
 </div>

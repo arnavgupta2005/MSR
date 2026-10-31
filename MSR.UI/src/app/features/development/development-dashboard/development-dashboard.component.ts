@@ -10,7 +10,7 @@ import {
   DEFAULT_KPI_SPRINTS,
   MAX_PERFORMANCE_SPRINTS
 } from '../../../core/config/report.config';
-import { SprintPerformanceKpi } from '../../../core/models/api-models';
+import { ResourceCompletion, SprintPerformanceKpi } from '../../../core/models/api-models';
 import { SprintPerformanceService } from '../../../core/services/sprint-performance.service';
 
 import { ProductSelectorComponent } from '../../../shared/components/product-selector/product-selector.component';
@@ -31,8 +31,8 @@ import {
 } from '../../../shared/components/chart-panel-grid/chart-panel-grid.component';
 import {
   buildColumnChart,
+  buildCompletionTrendBarChart,
   buildComboCompletionChart,
-  buildGroupedBarChart,
   buildLineChart,
   buildMultiLineChart,
   buildPanelLineChart,
@@ -41,8 +41,7 @@ import {
 import {
   lineBySprint,
   multiSeriesBySprint,
-  panelsByGroup,
-  pivotByGroupAndSprint
+  panelsByGroup
 } from '../../../shared/utils/series.transform';
 
 type LoadState = 'loading' | 'ready' | 'empty' | 'error';
@@ -97,9 +96,10 @@ export class DevelopmentDashboardComponent implements OnInit {
   velocity: ChartVm = { state: 'loading', options: null };
   rollover: ChartVm = { state: 'loading', options: null };
   teamRollover: ChartVm = { state: 'loading', options: null };
-  resourceCompletion: ChartVm = { state: 'loading', options: null };
-  /** Internal-scroll min width for the resource completion grouped bars (0 = no scroll). */
-  resourceCompletionMinWidth = 0;
+  resourceCompletion: PanelVm = { state: 'loading', panels: [], legend: [] };
+  resourceCompletionTeams: { id: number; name: string }[] = [];
+  selectedResourceCompletionTeamId: number | null = null;
+  private resourceCompletionRows: ResourceCompletion[] = [];
 
   // ---- charts (small-multiple panels) ----
   teamVelocity: PanelVm = { state: 'loading', panels: [], legend: [] };
@@ -127,6 +127,11 @@ export class DevelopmentDashboardComponent implements OnInit {
   onPerfSprintsChange(sprints: number[]): void {
     this.selectedPerfSprints = sprints;
     this.loadCharts();
+  }
+
+  onResourceCompletionTeamChange(event: Event): void {
+    this.selectedResourceCompletionTeamId = Number((event.target as HTMLSelectElement).value);
+    this.updateResourceCompletionPanels();
   }
 
   // ============================================================
@@ -341,29 +346,55 @@ export class DevelopmentDashboardComponent implements OnInit {
         };
       });
 
-    // 8. Resource Completion Trends — multi-series line (one per employee)
+    // 8. Resource Completion Trends — one member chart for the selected team
     this.service.getResourceCompletion(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
-        if (rows === null) { this.resourceCompletion = { state: 'error', options: null }; return; }
-        if (rows.length === 0) { this.resourceCompletion = { state: 'empty', options: null }; return; }
-        const { categories, series } = pivotByGroupAndSprint(
-          rows, r => r.employeeName, r => Math.round(r.completionPercentage * 100) / 100
+        if (rows === null) { this.resourceCompletion = { state: 'error', panels: [], legend: [] }; return; }
+        if (rows.length === 0) { this.resourceCompletion = { state: 'empty', panels: [], legend: [] }; return; }
+
+        this.resourceCompletionRows = rows;
+        this.resourceCompletionTeams = Array.from(
+          new Map(rows.map(row => [row.teamId, row.teamName])).entries(),
+          ([teamId, teamName]) => ({ id: teamId, name: teamName })
         );
-        // Give each employee enough width for the grouped sprint bars and labels.
-        this.resourceCompletionMinWidth = categories.length > 5 ? categories.length * 220 : 0;
-        const opts = buildGroupedBarChart(
-          categories, series, SERIES_COLORS, 320, true, 'Employee', 'Completion %'
-        );
-        this.resourceCompletion = { state: 'ready', options: opts };
+        if (!this.resourceCompletionTeams.some(team => team.id === this.selectedResourceCompletionTeamId)) {
+          this.selectedResourceCompletionTeamId = this.resourceCompletionTeams[0].id;
+        }
+        this.updateResourceCompletionPanels();
       });
+  }
+
+  private updateResourceCompletionPanels(): void {
+    const teamRows = this.resourceCompletionRows.filter(
+      row => row.teamId === this.selectedResourceCompletionTeamId
+    );
+    const grouped = panelsByGroup(teamRows, row => row.employeeName, [
+      { name: 'Completion %', value: row => Math.round(row.completionPercentage * 100) / 100 }
+    ]);
+    this.resourceCompletion = {
+      state: grouped.length ? 'ready' : 'empty',
+      legend: [{ name: 'Completion %', color: SERIES_COLORS[4] }],
+      panels: grouped.map(member => ({
+        title: member.group,
+        options: buildCompletionTrendBarChart(
+          member.sprints.map(sprint => `Sprint ${sprint}`),
+          member.series[0].data,
+          SERIES_COLORS[4],
+          member.group,
+          190
+        )
+      }))
+    };
   }
 
   private setAllLoading(): void {
     this.velocity = { state: 'loading', options: null };
     this.rollover = { state: 'loading', options: null };
     this.teamRollover = { state: 'loading', options: null };
-    this.resourceCompletion = { state: 'loading', options: null };
+    this.resourceCompletion = { state: 'loading', panels: [], legend: [] };
+    this.resourceCompletionRows = [];
+    this.resourceCompletionTeams = [];
     this.teamVelocity = { state: 'loading', panels: [], legend: [] };
     this.teamCompletion = { state: 'loading', panels: [], legend: [] };
     this.velocityHeadcount = { state: 'loading', panels: [], legend: [] };
@@ -374,7 +405,9 @@ export class DevelopmentDashboardComponent implements OnInit {
     this.velocity = { state: 'empty', options: null };
     this.rollover = { state: 'empty', options: null };
     this.teamRollover = { state: 'empty', options: null };
-    this.resourceCompletion = { state: 'empty', options: null };
+    this.resourceCompletion = { state: 'empty', panels: [], legend: [] };
+    this.resourceCompletionRows = [];
+    this.resourceCompletionTeams = [];
     this.teamVelocity = { state: 'empty', panels: [], legend: [] };
     this.teamCompletion = { state: 'empty', panels: [], legend: [] };
     this.velocityHeadcount = { state: 'empty', panels: [], legend: [] };

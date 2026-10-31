@@ -33,10 +33,13 @@ export interface ChartPanel {
         <h3>
           <span *ngIf="index" class="index">{{ index }}.</span> {{ title }}
         </h3>
-        <div class="legend" *ngIf="state === 'ready' && legend.length">
-          <span class="legend-item" *ngFor="let l of legend">
-            <i class="dot" [style.background]="l.color"></i>{{ l.name }}
-          </span>
+        <div class="panel-header-actions">
+          <div class="legend" *ngIf="state === 'ready' && legend.length">
+            <span class="legend-item" *ngFor="let l of legend">
+              <i class="dot" [style.background]="l.color"></i>{{ l.name }}
+            </span>
+          </div>
+          <ng-content select="[filter]"></ng-content>
         </div>
       </header>
 

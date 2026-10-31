@@ -136,6 +136,34 @@ export function buildColumnChart(
   };
 }
 
+/** Percentage columns for one employee's completion trend across sprints. */
+export function buildCompletionTrendBarChart(
+  categories: (string | number)[],
+  data: (number | null)[],
+  color: string,
+  employeeName: string,
+  height = 190
+): ChartOptions {
+  const options = buildColumnChart(
+    categories,
+    [{ name: 'Completion %', data }],
+    [color],
+    height
+  );
+  return {
+    ...options,
+    yaxis: {
+      min: 0,
+      max: 100,
+      labels: {
+        formatter: (value: number) => `${Math.round(value)}%`,
+        style: { colors: AXIS_LABEL_COLOR, fontSize: '11px', fontFamily: 'Inter, sans-serif' }
+      }
+    } as any,
+    tooltip: powerBiTooltip({ headerGroup: employeeName, percentSeries: ['Completion %'] })
+  };
+}
+
 /** Horizontal bar chart for resource/team labels. */
 export function buildHorizontalBarChart(
   categories: (string | number)[],

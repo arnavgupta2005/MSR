@@ -73,7 +73,6 @@
       <span class="inline-label">Sprint Filter</span>
       <app-sprint-multi-select
         [selected]="selectedPerfSprints"
-        [max]="maxPerfSprints"
         (selectedChange)="onPerfSprintsChange($event)">
       </app-sprint-multi-select>
     </div>
@@ -81,10 +80,13 @@
     <div class="chart-grid qa-charts">
       <app-chart-card class="span-5" [index]="1" title="QA Rollover Trend" subtitle="Rollover Points"
         [state]="rollover.state" [options]="rollover.options" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
-      <app-chart-card class="span-7" [index]="2" title="Story Points Tested" subtitle="QA-wise · Sum of Story Points Tested"
+      <app-chart-card class="span-7" [index]="2" title="QA Headcount Trends Across Sprints"
+        [state]="headcountTrend.state" [options]="headcountTrend.options" [chartHeight]="280"
+        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+      <app-chart-card class="span-12" [index]="3" title="Story Points Tested" subtitle="QA-wise · Sum of Story Points Tested"
         [state]="storyPoints.state" [options]="storyPoints.options" [chartHeight]="storyPointsChartHeight"
         [scrollMinHeight]="storyPointsMinHeight" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
-      <app-chart-card class="span-12" [index]="3" title="Daily Delivery Trend" subtitle="Delivered Points"
+      <app-chart-card class="span-12" [index]="4" title="Daily Delivery Trend" subtitle="Delivered Points"
         [state]="delivery.state" [options]="delivery.options" [chartHeight]="320"
         [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
     </div>

@@ -86,7 +86,6 @@
       <span class="inline-label">Sprint Filter</span>
       <app-sprint-multi-select
         [selected]="selectedPerfSprints"
-        [max]="maxPerfSprints"
         (selectedChange)="onPerfSprintsChange($event)">
       </app-sprint-multi-select>
     </div>
@@ -102,33 +101,58 @@
         [state]="resourceVelocity.state" [panels]="resourceVelocity.panels" [legend]="resourceVelocity.legend"
         [panelMinWidth]="220" [horizontal]="true" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-panel-grid>
 
-      <!-- 3. Velocity Trends Across Sprints -->
-      <app-chart-card class="span-6" [index]="3" title="Velocity Trends Across Sprints"
+      <!-- 3. Headcount Trends Across Sprints -->
+      <app-chart-card class="span-12" [index]="3" title="Headcount Trends Across Sprints"
+        [state]="headcountTrend.state" [options]="headcountTrend.options" [chartHeight]="260"
+        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+
+      <!-- 4. Completion % Trends Across Sprints -->
+      <app-chart-card class="span-12" [index]="4" title="Completion % Trends Across Sprints"
+        [state]="completionTrend.state" [options]="completionTrend.options" [chartHeight]="260"
+        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+
+      <!-- 5. Planned Items vs Delivered Items Across Sprints -->
+      <app-chart-card class="span-12" [index]="5" title="Planned Items vs Delivered Items Across Sprints"
+        [state]="plannedDeliveredItemsTrend.state" [options]="plannedDeliveredItemsTrend.options" [chartHeight]="260"
+        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+
+      <!-- 6. Rollovers vs Rollover Points Across Sprints -->
+      <app-chart-card class="span-12" [index]="6" title="Rollovers vs Rollover Points Across Sprints"
+        [state]="rolloverRolloverPointsTrend.state" [options]="rolloverRolloverPointsTrend.options" [chartHeight]="260"
+        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+
+      <!-- 7. Velocity vs Assigned Points vs Delivered Points -->
+      <app-chart-card class="span-12" [index]="7" title="Velocity vs Assigned Points vs Delivered Points Across Sprints"
+        [state]="velocityAssignedDeliveredTrend.state" [options]="velocityAssignedDeliveredTrend.options" [chartHeight]="260"
+        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+
+      <!-- 8. Velocity Trends Across Sprints -->
+      <app-chart-card class="span-12" [index]="8" title="Velocity Trends Across Sprints"
         [state]="velocity.state" [options]="velocity.options" [chartHeight]="260"
         [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
 
-      <!-- 4. Rollovers Trends Across Sprints -->
-      <app-chart-card class="span-6" [index]="4" title="Rollovers Trends Across Sprints"
+      <!-- 9. Rollovers Trends Across Sprints -->
+      <app-chart-card class="span-12" [index]="9" title="Rollovers Trends Across Sprints"
         [state]="rollover.state" [options]="rollover.options" [chartHeight]="260"
         [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
 
-      <!-- 5. Team wise Actual vs Trailing Velocity (full width, 2x2 horizontal) -->
-      <app-chart-panel-grid class="span-12" [index]="5" title="Team wise Actual vs Trailing Velocity"
+      <!-- 10. Team wise Actual vs Trailing Velocity (full width, 2x2 horizontal) -->
+      <app-chart-panel-grid class="span-12" [index]="10" title="Team wise Actual vs Trailing Velocity"
         [state]="teamVelocity.state" [panels]="teamVelocity.panels" [legend]="teamVelocity.legend"
         [panelMinWidth]="240" [horizontal]="true" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-panel-grid>
 
-      <!-- 6. Team wise Committed vs Completed in Completion % (full width) -->
-      <app-chart-panel-grid class="span-12" [index]="6" title="Team wise Committed vs Completed in Completion %"
+      <!-- 11. Team wise Committed vs Completed in Completion % (full width) -->
+      <app-chart-panel-grid class="span-12" [index]="11" title="Team wise Committed vs Completed in Completion %"
         [state]="teamCompletion.state" [panels]="teamCompletion.panels" [legend]="teamCompletion.legend"
         [panelMinWidth]="260" [horizontal]="true" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-panel-grid>
 
-      <!-- 7. Team wise Rollovers Trends Across Sprints (full width) -->
-      <app-chart-card class="span-12" [index]="7" title="Team wise Rollovers Trends Across Sprints"
+      <!-- 12. Team wise Rollovers Trends Across Sprints (full width) -->
+      <app-chart-card class="span-12" [index]="12" title="Team wise Rollovers Trends Across Sprints"
         [state]="teamRollover.state" [options]="teamRollover.options" [chartHeight]="260"
         [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
 
-      <!-- 8. Resource Completion Trends -->
-      <app-chart-panel-grid class="span-12" [index]="8" title="Resource Completion Trends"
+      <!-- 13. Resource Completion Trends -->
+      <app-chart-panel-grid class="span-12" [index]="13" title="Resource Completion Trends"
         [state]="resourceCompletion.state" [panels]="resourceCompletion.panels" [legend]="resourceCompletion.legend"
         [panelMinWidth]="280" [horizontal]="true" [viewEnabled]="true"
         (retry)="loadCharts()">

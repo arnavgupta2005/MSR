@@ -94,6 +94,11 @@ export class DevelopmentDashboardComponent implements OnInit {
 
   // ---- charts (simple line/multi-series) ----
   velocity: ChartVm = { state: 'loading', options: null };
+  headcountTrend: ChartVm = { state: 'loading', options: null };
+  completionTrend: ChartVm = { state: 'loading', options: null };
+  plannedDeliveredItemsTrend: ChartVm = { state: 'loading', options: null };
+  rolloverRolloverPointsTrend: ChartVm = { state: 'loading', options: null };
+  velocityAssignedDeliveredTrend: ChartVm = { state: 'loading', options: null };
   rollover: ChartVm = { state: 'loading', options: null };
   teamRollover: ChartVm = { state: 'loading', options: null };
   resourceCompletion: PanelVm = { state: 'loading', panels: [], legend: [] };
@@ -179,6 +184,70 @@ export class DevelopmentDashboardComponent implements OnInit {
 
     this.setAllLoading();
 
+    // Product-level trend charts used by the performance summary cards.
+    this.service.getProductTrends(id, sprints)
+      .pipe(catchError(() => of(null)))
+      .subscribe(rows => {
+        if (rows === null) {
+          this.plannedDeliveredItemsTrend = { state: 'error', options: null };
+          this.rolloverRolloverPointsTrend = { state: 'error', options: null };
+          this.velocityAssignedDeliveredTrend = { state: 'error', options: null };
+          return;
+        }
+        if (rows.length === 0) {
+          this.plannedDeliveredItemsTrend = { state: 'empty', options: null };
+          this.rolloverRolloverPointsTrend = { state: 'empty', options: null };
+          this.velocityAssignedDeliveredTrend = { state: 'empty', options: null };
+          return;
+        }
+
+        const sorted = [...rows].sort((a, b) => a.sprintNumber - b.sprintNumber);
+        const categories = sorted.map(row => `Sprint ${row.sprintNumber}`);
+
+        this.plannedDeliveredItemsTrend = {
+          state: 'ready',
+          options: buildLineChart(
+            categories,
+            [
+              { name: 'Planned Items', data: sorted.map(row => row.plannedItems) },
+              { name: 'Delivered Items', data: sorted.map(row => row.deliveredItems) }
+            ],
+            [SERIES_COLORS[2], SERIES_COLORS[0]],
+            260,
+            'Items'
+          )
+        };
+
+        this.rolloverRolloverPointsTrend = {
+          state: 'ready',
+          options: buildLineChart(
+            categories,
+            [
+              { name: 'Rollovers', data: sorted.map(row => row.rollovers) },
+              { name: 'Rollover Points', data: sorted.map(row => row.rolloverPoints) }
+            ],
+            [SERIES_COLORS[3], SERIES_COLORS[1]],
+            260,
+            'Count / Points'
+          )
+        };
+
+        this.velocityAssignedDeliveredTrend = {
+          state: 'ready',
+          options: buildLineChart(
+            categories,
+            [
+              { name: 'Velocity', data: sorted.map(row => row.velocity) },
+              { name: 'Assigned Points', data: sorted.map(row => row.assignedPoints) },
+              { name: 'Delivered Points', data: sorted.map(row => row.deliveredPoints) }
+            ],
+            [SERIES_COLORS[4], SERIES_COLORS[1], SERIES_COLORS[0]],
+            260,
+            'Points'
+          )
+        };
+      });
+
     // 1. Velocity Trends Across Sprints — Delivered + Trailing Velocity
     this.service.getVelocityTrends(id, sprints)
       .pipe(catchError(() => of(null)))
@@ -245,8 +314,16 @@ export class DevelopmentDashboardComponent implements OnInit {
     this.service.getTeamCompletionTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
-        if (rows === null) { this.teamCompletion = { state: 'error', panels: [], legend: [] }; return; }
-        if (rows.length === 0) { this.teamCompletion = { state: 'empty', panels: [], legend: [] }; return; }
+        if (rows === null) {
+          this.teamCompletion = { state: 'error', panels: [], legend: [] };
+          this.completionTrend = { state: 'error', options: null };
+          return;
+        }
+        if (rows.length === 0) {
+          this.teamCompletion = { state: 'empty', panels: [], legend: [] };
+          this.completionTrend = { state: 'empty', options: null };
+          return;
+        }
         const grouped = panelsByGroup(rows, r => r.teamName, [
           { name: 'Committed Points', value: r => r.assignedPoints },
           { name: 'Delivered Points', value: r => r.deliveredPoints },
@@ -272,6 +349,32 @@ export class DevelopmentDashboardComponent implements OnInit {
             )
           }))
         };
+
+        const completionBySprint = new Map<number, { assignedPoints: number; deliveredPoints: number }>();
+        for (const row of rows) {
+          const totals = completionBySprint.get(row.sprintNumber) ?? { assignedPoints: 0, deliveredPoints: 0 };
+          totals.assignedPoints += row.assignedPoints;
+          totals.deliveredPoints += row.deliveredPoints;
+          completionBySprint.set(row.sprintNumber, totals);
+        }
+        const sprintNumbers = Array.from(completionBySprint.keys()).sort((a, b) => a - b);
+        this.completionTrend = {
+          state: 'ready',
+          options: buildLineChart(
+            sprintNumbers.map(sprintNumber => `Sprint ${sprintNumber}`),
+            [{
+              name: 'Completion %',
+              data: sprintNumbers.map(sprintNumber => {
+                const totals = completionBySprint.get(sprintNumber);
+                if (!totals || totals.assignedPoints === 0) { return 0; }
+                return Math.round((totals.deliveredPoints / totals.assignedPoints) * 1000) / 10;
+              })
+            }],
+            [SERIES_COLORS[4]],
+            260,
+            'Completion %'
+          )
+        };
       });
 
     // 5. Team wise Rollovers Trends Across Sprints — multi-series line (one per team)
@@ -293,8 +396,16 @@ export class DevelopmentDashboardComponent implements OnInit {
     this.service.getActualVelocityVsHeadcount(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
-        if (rows === null) { this.velocityHeadcount = { state: 'error', panels: [], legend: [] }; return; }
-        if (rows.length === 0) { this.velocityHeadcount = { state: 'empty', panels: [], legend: [] }; return; }
+        if (rows === null) {
+          this.velocityHeadcount = { state: 'error', panels: [], legend: [] };
+          this.headcountTrend = { state: 'error', options: null };
+          return;
+        }
+        if (rows.length === 0) {
+          this.velocityHeadcount = { state: 'empty', panels: [], legend: [] };
+          this.headcountTrend = { state: 'empty', options: null };
+          return;
+        }
         const colors = [SERIES_COLORS[0], SERIES_COLORS[1]];
         const grouped = panelsByGroup(rows, r => r.teamName, [
           { name: 'Delivered Points', value: r => r.actualVelocity },
@@ -313,6 +424,25 @@ export class DevelopmentDashboardComponent implements OnInit {
               { seriesName: 'Headcount', min: 0, max: 10, tickAmount: 2, title: 'Headcount', leftTitle: 'Delivered Points' }
             )
           }))
+        };
+
+        const headcountBySprint = new Map<number, number>();
+        for (const row of rows) {
+          headcountBySprint.set(
+            row.sprintNumber,
+            (headcountBySprint.get(row.sprintNumber) ?? 0) + row.headcount
+          );
+        }
+        const sprintNumbers = Array.from(headcountBySprint.keys()).sort((a, b) => a - b);
+        this.headcountTrend = {
+          state: 'ready',
+          options: buildLineChart(
+            sprintNumbers.map(sprintNumber => `Sprint ${sprintNumber}`),
+            [{ name: 'Headcount', data: sprintNumbers.map(sprintNumber => headcountBySprint.get(sprintNumber) ?? 0) }],
+            [SERIES_COLORS[1]],
+            260,
+            'Headcount'
+          )
         };
       });
 
@@ -386,6 +516,11 @@ export class DevelopmentDashboardComponent implements OnInit {
 
   private setAllLoading(): void {
     this.velocity = { state: 'loading', options: null };
+    this.headcountTrend = { state: 'loading', options: null };
+    this.completionTrend = { state: 'loading', options: null };
+    this.plannedDeliveredItemsTrend = { state: 'loading', options: null };
+    this.rolloverRolloverPointsTrend = { state: 'loading', options: null };
+    this.velocityAssignedDeliveredTrend = { state: 'loading', options: null };
     this.rollover = { state: 'loading', options: null };
     this.teamRollover = { state: 'loading', options: null };
     this.resourceCompletion = { state: 'loading', panels: [], legend: [] };
@@ -399,6 +534,11 @@ export class DevelopmentDashboardComponent implements OnInit {
 
   private setAllEmpty(): void {
     this.velocity = { state: 'empty', options: null };
+    this.headcountTrend = { state: 'empty', options: null };
+    this.completionTrend = { state: 'empty', options: null };
+    this.plannedDeliveredItemsTrend = { state: 'empty', options: null };
+    this.rolloverRolloverPointsTrend = { state: 'empty', options: null };
+    this.velocityAssignedDeliveredTrend = { state: 'empty', options: null };
     this.rollover = { state: 'empty', options: null };
     this.teamRollover = { state: 'empty', options: null };
     this.resourceCompletion = { state: 'empty', panels: [], legend: [] };

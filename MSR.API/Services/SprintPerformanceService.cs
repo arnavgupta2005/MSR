@@ -102,6 +102,39 @@ namespace MSR.API.Services
             return data;
         }
 
+        public async Task<List<ProductTrendDto>> GetProductTrendsAsync(
+    SprintPerformanceFilterDto filter)
+        {
+            var data = await _context.SprintPerformances
+                .AsNoTracking()
+                .Include(x => x.Sprint)
+                .Where(x =>
+                    x.ProductAreaId == filter.ProductAreaId &&
+                    x.Sprint != null &&
+                    filter.SprintNumbers.Contains(x.Sprint.SprintNumber))
+                .GroupBy(x => new
+                {
+                    x.SprintId,
+                    x.Sprint!.SprintNumber
+                })
+                .Select(g => new ProductTrendDto
+                {
+                    SprintId = g.Key.SprintId,
+                    SprintNumber = g.Key.SprintNumber,
+                    Velocity = g.Sum(x => x.ActualVelocity ?? 0),
+                    AssignedPoints = g.Sum(x => x.AssignedPoints ?? 0),
+                    DeliveredPoints = g.Sum(x => x.DeliveredPoints ?? 0),
+                    PlannedItems = g.Sum(x => x.PlannedItems ?? 0),
+                    DeliveredItems = g.Sum(x => x.DeliveredItems ?? 0),
+                    Rollovers = g.Sum(x => x.Rollover ?? 0),
+                    RolloverPoints = g.Sum(x => x.RolloverPoints ?? 0)
+                })
+                .OrderBy(x => x.SprintNumber)
+                .ToListAsync();
+
+            return data;
+        }
+
 
         public async Task<List<TeamRolloverTrendDto>> GetTeamRolloverTrendsAsync(
     SprintPerformanceFilterDto filter)

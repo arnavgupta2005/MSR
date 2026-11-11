@@ -73,6 +73,7 @@ export class QaDashboardComponent implements OnInit {
   kpi: QaKpi | null = null;
 
   rollover: ChartVm = { state: 'loading', options: null };
+  headcountTrend: ChartVm = { state: 'loading', options: null };
   storyPoints: ChartVm = { state: 'loading', options: null };
   delivery: ChartVm = { state: 'loading', options: null };
   /** Internal-scroll min height for the story-points stacked bars (0 = no scroll). */
@@ -124,12 +125,14 @@ export class QaDashboardComponent implements OnInit {
 
     if (sprints.length === 0) {
       this.rollover = { state: 'empty', options: null };
+      this.headcountTrend = { state: 'empty', options: null };
       this.storyPoints = { state: 'empty', options: null };
       this.delivery = { state: 'empty', options: null };
       return;
     }
 
     this.rollover = { state: 'loading', options: null };
+    this.headcountTrend = { state: 'loading', options: null };
     this.storyPoints = { state: 'loading', options: null };
     this.delivery = { state: 'loading', options: null };
 
@@ -154,8 +157,16 @@ export class QaDashboardComponent implements OnInit {
     this.service.getStoryPointsTested(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
-        if (rows === null) { this.storyPoints = { state: 'error', options: null }; return; }
-        if (rows.length === 0) { this.storyPoints = { state: 'empty', options: null }; return; }
+        if (rows === null) {
+          this.storyPoints = { state: 'error', options: null };
+          this.headcountTrend = { state: 'error', options: null };
+          return;
+        }
+        if (rows.length === 0) {
+          this.storyPoints = { state: 'empty', options: null };
+          this.headcountTrend = { state: 'empty', options: null };
+          return;
+        }
         const { categories, series } = stackBySprint(rows, r => r.employeeName, r => r.deliveredPoints);
         // Fixed row height per employee keeps the stacked bars a readable
         // thickness no matter how many employees there are. The chart grows
@@ -170,6 +181,24 @@ export class QaDashboardComponent implements OnInit {
           state: 'ready',
           options: buildHorizontalStackedBarChart(
             categories, series, SERIES_COLORS, chartHeight, '', 'Employee', '65%'
+          )
+        };
+
+        const headcountBySprint = new Map<number, Set<number>>();
+        for (const row of rows) {
+          const employeeSet = headcountBySprint.get(row.sprintNumber) ?? new Set<number>();
+          employeeSet.add(row.employeeId);
+          headcountBySprint.set(row.sprintNumber, employeeSet);
+        }
+        const sprintNumbers = Array.from(headcountBySprint.keys()).sort((a, b) => a - b);
+        this.headcountTrend = {
+          state: 'ready',
+          options: buildLineChart(
+            sprintNumbers.map(sprintNumber => `Sprint ${sprintNumber}`),
+            [{ name: 'QA Headcount', data: sprintNumbers.map(sprintNumber => headcountBySprint.get(sprintNumber)?.size ?? 0) }],
+            [SERIES_COLORS[0]],
+            280,
+            'Headcount'
           )
         };
       });

@@ -37,7 +37,18 @@ public class SprintPerformanceController : ControllerBase
         return Ok(result);
     }
 
-    // 3. Team-wise Rollover Trends
+    // 3. Product-level Trends Across Sprints
+    [HttpGet("product-trends")]
+    public async Task<IActionResult> GetProductTrends(
+        [FromQuery] SprintPerformanceFilterDto filter)
+    {
+        var result =
+            await _service.GetProductTrendsAsync(filter);
+
+        return Ok(result);
+    }
+
+    // 4. Team-wise Rollover Trends
     [HttpGet("team-rollover-trends")]
     public async Task<IActionResult> GetTeamRolloverTrends(
         [FromQuery] SprintPerformanceFilterDto filter)
@@ -48,7 +59,7 @@ public class SprintPerformanceController : ControllerBase
         return Ok(result);
     }
 
-    // 4. Actual Velocity vs Headcount
+    // 5. Actual Velocity vs Headcount
     [HttpGet("actual-velocity-vs-headcount")]
     public async Task<IActionResult> GetActualVelocityVsHeadcount(
         [FromQuery] SprintPerformanceFilterDto filter)
@@ -59,7 +70,7 @@ public class SprintPerformanceController : ControllerBase
         return Ok(result);
     }
 
-    // 5. Velocity Trends
+    // 6. Velocity Trends
     [HttpGet("velocity-trends")]
     public async Task<IActionResult> GetVelocityTrends(
         [FromQuery] SprintPerformanceFilterDto filter)
@@ -70,7 +81,7 @@ public class SprintPerformanceController : ControllerBase
         return Ok(result);
     }
 
-    // 6. Resource-wise Velocity Trends
+    // 7. Resource-wise Velocity Trends
     [HttpGet("resource-velocity-trends")]
     public async Task<IActionResult> GetResourceVelocityTrends(
         [FromQuery] SprintPerformanceFilterDto filter)
@@ -81,7 +92,7 @@ public class SprintPerformanceController : ControllerBase
         return Ok(result);
     }
 
-    // 7. Team-wise Velocity Trends
+    // 8. Team-wise Velocity Trends
     [HttpGet("team-velocity-trends")]
     public async Task<IActionResult> GetTeamVelocityTrends(
         [FromQuery] SprintPerformanceFilterDto filter)
@@ -92,7 +103,7 @@ public class SprintPerformanceController : ControllerBase
         return Ok(result);
     }
 
-    // 8. Team Completion Trends
+    // 9. Team Completion Trends
     [HttpGet("team-completion-trends")]
     public async Task<IActionResult> GetTeamCompletionTrends(
         [FromQuery] SprintPerformanceFilterDto filter)
@@ -103,7 +114,7 @@ public class SprintPerformanceController : ControllerBase
         return Ok(result);
     }
 
-    // 9. Resource Completion
+    // 10. Resource Completion
     [HttpGet("resource-completion")]
     public async Task<IActionResult> GetResourceCompletion(
         [FromQuery] SprintPerformanceFilterDto filter)

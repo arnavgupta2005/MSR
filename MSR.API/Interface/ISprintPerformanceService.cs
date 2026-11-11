@@ -10,6 +10,9 @@ namespace MSR.API.Services
         Task<List<RolloverTrendDto>> GetRolloverTrendsAsync(
             SprintPerformanceFilterDto filter);
 
+        Task<List<ProductTrendDto>> GetProductTrendsAsync(
+            SprintPerformanceFilterDto filter);
+
         Task<List<TeamRolloverTrendDto>> GetTeamRolloverTrendsAsync(
             SprintPerformanceFilterDto filter);
 

@@ -32,6 +32,18 @@ export interface RolloverTrend {
   rolloverPoints: number;
 }
 
+export interface ProductTrend {
+  sprintId: number;
+  sprintNumber: number;
+  velocity: number;
+  assignedPoints: number;
+  deliveredPoints: number;
+  plannedItems: number;
+  deliveredItems: number;
+  rollovers: number;
+  rolloverPoints: number;
+}
+
 export interface TeamRolloverTrend {
   teamId: number;
   teamName: string;

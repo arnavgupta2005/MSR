@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  ProductTrend,
   RolloverTrend,
   ResourceCompletion,
   ResourceVelocityTrend,
@@ -45,6 +46,12 @@ export class SprintPerformanceService {
 
   getRolloverTrends(productAreaId: number, sprints: number[]): Observable<RolloverTrend[]> {
     return this.http.get<RolloverTrend[]>(`${this.baseUrl}/rollover-trends`, {
+      params: this.sprintParams(productAreaId, sprints)
+    });
+  }
+
+  getProductTrends(productAreaId: number, sprints: number[]): Observable<ProductTrend[]> {
+    return this.http.get<ProductTrend[]>(`${this.baseUrl}/product-trends`, {
       params: this.sprintParams(productAreaId, sprints)
     });
   }

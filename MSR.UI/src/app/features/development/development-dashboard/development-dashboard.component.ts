@@ -179,7 +179,7 @@ export class DevelopmentDashboardComponent implements OnInit {
 
     this.setAllLoading();
 
-    // 1. Velocity Trends Across Sprints — Actual + Trailing Velocity
+    // 1. Velocity Trends Across Sprints — Delivered + Trailing Velocity
     this.service.getVelocityTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
@@ -192,7 +192,7 @@ export class DevelopmentDashboardComponent implements OnInit {
           options: buildLineChart(
             categories,
             [
-              { name: 'Actual Velocity', data: sorted.map(r => r.actualVelocity) },
+              { name: 'Delivered Points', data: sorted.map(r => r.actualVelocity) },
               { name: 'Trailing Velocity', data: sorted.map(r => r.trailingVelocity) }
             ],
             [SERIES_COLORS[0], SERIES_COLORS[3]], 260, 'Velocity'
@@ -200,24 +200,22 @@ export class DevelopmentDashboardComponent implements OnInit {
         };
       });
 
-    // 2. Team wise Actual vs Trailing Velocity — per-team panels (Actual, Capacity, Trailing)
+    // 2. Team wise Actual vs Trailing Velocity — per-team panels (Actual, Trailing)
     this.service.getTeamVelocityTrends(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.teamVelocity = { state: 'error', panels: [], legend: [] }; return; }
         if (rows.length === 0) { this.teamVelocity = { state: 'empty', panels: [], legend: [] }; return; }
-        const colors = [SERIES_COLORS[0], SERIES_COLORS[1], SERIES_COLORS[2]];
+        const colors = [SERIES_COLORS[0], SERIES_COLORS[2]];
         const grouped = panelsByGroup(rows, r => r.teamName, [
-          { name: 'Actual Velocity', value: r => r.actualVelocity },
-          { name: 'Capacity', value: r => r.capacity },
+          { name: 'Delivered Points', value: r => r.actualVelocity },
           { name: 'Trailing Velocity', value: r => r.trailingVelocity }
         ]);
         this.teamVelocity = {
           state: 'ready',
           legend: [
-            { name: 'Actual Velocity', color: colors[0] },
-            { name: 'Capacity', color: colors[1] },
-            { name: 'Trailing Velocity', color: colors[2] }
+            { name: 'Delivered Points', color: colors[0] },
+            { name: 'Trailing Velocity', color: colors[1] }
           ],
           panels: grouped.map(g => ({
             title: g.group,
@@ -251,7 +249,7 @@ export class DevelopmentDashboardComponent implements OnInit {
         if (rows.length === 0) { this.teamCompletion = { state: 'empty', panels: [], legend: [] }; return; }
         const grouped = panelsByGroup(rows, r => r.teamName, [
           { name: 'Committed Points', value: r => r.assignedPoints },
-          { name: 'Completed Points', value: r => r.deliveredPoints },
+          { name: 'Delivered Points', value: r => r.deliveredPoints },
           { name: 'Completion %', value: r => Math.round(r.completionPercentage * 100) / 100 }
         ]);
         // Shared Story Points axis max across all team panels, rounded up to
@@ -263,7 +261,7 @@ export class DevelopmentDashboardComponent implements OnInit {
           legend: [
             { name: 'Completion %', color: SERIES_COLORS[4] },
             { name: 'Committed Points', color: SERIES_COLORS[1] },
-            { name: 'Completed Points', color: SERIES_COLORS[2] }
+            { name: 'Delivered Points', color: SERIES_COLORS[2] }
           ],
           panels: grouped.map(g => ({
             title: g.group,
@@ -291,7 +289,7 @@ export class DevelopmentDashboardComponent implements OnInit {
         };
       });
 
-    // 6. Actual Velocity vs Head Count (Last 4 Sprints) — per-team panels
+    // 6. Delivered Points vs Head Count (Last 4 Sprints) — per-team panels
     this.service.getActualVelocityVsHeadcount(id, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
@@ -299,20 +297,20 @@ export class DevelopmentDashboardComponent implements OnInit {
         if (rows.length === 0) { this.velocityHeadcount = { state: 'empty', panels: [], legend: [] }; return; }
         const colors = [SERIES_COLORS[0], SERIES_COLORS[1]];
         const grouped = panelsByGroup(rows, r => r.teamName, [
-          { name: 'Actual Velocity', value: r => r.actualVelocity },
+          { name: 'Delivered Points', value: r => r.actualVelocity },
           { name: 'Headcount', value: r => r.headcount }
         ]);
         this.velocityHeadcount = {
           state: 'ready',
           legend: [
-            { name: 'Actual Velocity', color: colors[0] },
+            { name: 'Delivered Points', color: colors[0] },
             { name: 'Headcount', color: colors[1] }
           ],
           panels: grouped.map(g => ({
             title: g.group,
             options: buildPanelLineChart(
               g.sprints.map(sp => `Sprint ${sp}`), g.series, colors, 150, g.group, false,
-              { seriesName: 'Headcount', min: 0, max: 10, tickAmount: 2, title: 'Headcount', leftTitle: 'Actual Velocity' }
+              { seriesName: 'Headcount', min: 0, max: 10, tickAmount: 2, title: 'Headcount', leftTitle: 'Delivered Points' }
             )
           }))
         };
@@ -324,20 +322,18 @@ export class DevelopmentDashboardComponent implements OnInit {
       .subscribe(rows => {
         if (rows === null) { this.resourceVelocity = { state: 'error', panels: [], legend: [] }; return; }
         if (rows.length === 0) { this.resourceVelocity = { state: 'empty', panels: [], legend: [] }; return; }
-        const colors = [SERIES_COLORS[0], SERIES_COLORS[2], SERIES_COLORS[1], SERIES_COLORS[4]];
+        const colors = [SERIES_COLORS[0], SERIES_COLORS[2], SERIES_COLORS[4]];
         const grouped = panelsByGroup(rows, r => r.employeeName, [
-          { name: 'Actual Velocity', value: r => r.actualVelocity },
+          { name: 'Delivered Points', value: r => r.actualVelocity },
           { name: 'Assigned Points', value: r => r.assignedPoints },
-          { name: 'Capacity', value: r => r.capacity },
           { name: 'Trailing Velocity', value: r => r.trailingVelocity }
         ]);
         this.resourceVelocity = {
           state: 'ready',
           legend: [
-            { name: 'Actual Velocity', color: colors[0] },
+            { name: 'Delivered Points', color: colors[0] },
             { name: 'Assigned Points', color: colors[1] },
-            { name: 'Capacity', color: colors[2] },
-            { name: 'Trailing Velocity', color: colors[3] }
+            { name: 'Trailing Velocity', color: colors[2] }
           ],
           panels: grouped.map(g => ({
             title: g.group,

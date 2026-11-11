@@ -350,7 +350,7 @@ export function buildComboCompletionChart(
     series: [
       { name: 'Completion %', type: 'column', data: completionPct },
       { name: 'Committed Points', type: 'line', data: committed },
-      { name: 'Completed Points', type: 'line', data: completed }
+        { name: 'Delivered Points', type: 'line', data: completed }
     ] as any,
     chart: { ...baseChart(height, 'line'), stacked: false } as any,
     colors: [SERIES_COLORS[4], SERIES_COLORS[1], SERIES_COLORS[2]],
@@ -375,7 +375,7 @@ export function buildComboCompletionChart(
         title: { text: 'Story Points', style: { color: AXIS_LABEL_COLOR, fontSize: '10px', fontWeight: 600 } },
         labels: { style: { colors: AXIS_LABEL_COLOR, fontSize: '10px' } }
       },
-      { seriesName: 'Completed Points', opposite: true, min: 0, max: pointsMax, show: false }
+      { seriesName: 'Delivered Points', opposite: true, min: 0, max: pointsMax, show: false }
     ] as any,
     grid: baseGrid,
     legend: { show: false },
@@ -392,7 +392,7 @@ export function buildMultiLineChart(
   categories: (string | number)[],
   series: { name: string; data: (number | null)[] }[],
   colors: string[],
-  height = 260,
+  height = 240,
   yAxisTitle = ''
 ): ChartOptions {
   return {

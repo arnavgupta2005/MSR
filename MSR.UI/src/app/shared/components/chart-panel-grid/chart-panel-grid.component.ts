@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
-import { NgApexchartsModule } from 'ng-apexcharts';
+import { Component, EventEmitter, HostListener, inject, Input, Output, QueryList, ViewChildren } from '@angular/core';
+import { ChartComponent, NgApexchartsModule } from 'ng-apexcharts';
+import { firstValueFrom } from 'rxjs';
 import { ChartOptions, ChartState } from '../chart-card/chart-card.component';
+import { ChartExportService } from '../../../core/services/chart-export.service';
 import { LoadingStateComponent } from '../loading-state/loading-state.component';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
 import { ErrorStateComponent } from '../error-state/error-state.component';
@@ -51,18 +53,25 @@ export interface ChartPanel {
         <div class="panel-scroll" *ngIf="state === 'ready'"
              [class.horizontal]="horizontal"
              [style.--panel-min.px]="panelMinWidth">
-          <div class="panel-tile" *ngFor="let p of panels" [class.expanded]="expandedPanel === p"
+          <div class="panel-tile" *ngFor="let p of panels; let i = index" [class.expanded]="expandedPanel === p"
                [attr.role]="expandedPanel === p ? 'dialog' : null"
                [attr.aria-modal]="expandedPanel === p ? 'true' : null"
                [attr.aria-label]="expandedPanel === p ? p.title : null">
             <div class="panel-tile-header">
               <span class="panel-tile-title" [title]="p.title">{{ p.title }}</span>
-              <button *ngIf="viewEnabled" type="button" class="view-button"
-                      [attr.aria-expanded]="expandedPanel === p" (click)="toggleView(p)">
-                {{ expandedPanel === p ? 'Close view' : 'View' }}
-              </button>
+              <div class="panel-tile-actions">
+                <button type="button" class="export-button" [disabled]="exportingPanel !== null"
+                        [attr.aria-label]="exportErrorPanel === p ? 'PDF export failed. Retry export for ' + p.title : 'Export ' + p.title + ' as PDF'"
+                        (click)="exportPdf(p, i)">
+                  {{ exportErrorPanel === p ? 'Retry PDF' : exportingPanel === p ? 'Preparing...' : 'Export PDF' }}
+                </button>
+                <button *ngIf="viewEnabled" type="button" class="view-button"
+                        [attr.aria-expanded]="expandedPanel === p" (click)="toggleView(p)">
+                  {{ expandedPanel === p ? 'Close view' : 'View' }}
+                </button>
+              </div>
             </div>
-            <apx-chart
+            <apx-chart #chart
               [series]="p.options.series"
               [chart]="renderedOptions(p.options).chart"
               [xaxis]="p.options.xaxis!"
@@ -85,6 +94,8 @@ export interface ChartPanel {
   styleUrl: './chart-panel-grid.component.scss'
 })
 export class ChartPanelGridComponent {
+  @ViewChildren('chart') private chartComponents!: QueryList<ChartComponent>;
+
   @Input() title = '';
   @Input() index?: number;
   @Input() state: ChartState = 'loading';
@@ -98,6 +109,9 @@ export class ChartPanelGridComponent {
   @Input() viewEnabled = false;
   @Output() retry = new EventEmitter<void>();
 
+  private readonly chartExport = inject(ChartExportService);
+  exportingPanel: ChartPanel | null = null;
+  exportErrorPanel: ChartPanel | null = null;
   expandedPanel: ChartPanel | null = null;
   private readonly expandedOptionsCache = new WeakMap<ChartOptions, ChartOptions>();
 
@@ -113,6 +127,24 @@ export class ChartPanelGridComponent {
 
   toggleView(panel: ChartPanel): void {
     this.expandedPanel = this.expandedPanel === panel ? null : panel;
+  }
+
+  async exportPdf(panel: ChartPanel, panelIndex: number): Promise<void> {
+    if (this.exportingPanel) { return; }
+    const chart = this.chartComponents?.toArray()[panelIndex];
+    if (!chart) { return; }
+
+    this.exportingPanel = panel;
+    this.exportErrorPanel = null;
+    try {
+      const image = await chart.dataURI({ scale: 2 });
+      if (!image || !('imgURI' in image)) { throw new Error('Chart image unavailable'); }
+      await firstValueFrom(this.chartExport.exportPdf(panel.title, image.imgURI));
+    } catch {
+      this.exportErrorPanel = panel;
+    } finally {
+      this.exportingPanel = null;
+    }
   }
 
   closeView(): void {

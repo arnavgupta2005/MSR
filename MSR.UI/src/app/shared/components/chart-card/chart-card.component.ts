@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, Output, ViewChild } from '@angular/core';
 import {
   ApexAxisChartSeries,
   ApexNonAxisChartSeries,
@@ -14,8 +14,11 @@ import {
   ApexPlotOptions,
   ApexTooltip,
   ApexFill,
+  ChartComponent,
   NgApexchartsModule
 } from 'ng-apexcharts';
+import { firstValueFrom } from 'rxjs';
+import { ChartExportService } from '../../../core/services/chart-export.service';
 import { LoadingStateComponent } from '../loading-state/loading-state.component';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
 import { ErrorStateComponent } from '../error-state/error-state.component';
@@ -59,10 +62,17 @@ export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
           <span *ngIf="index" class="index">{{ index }}.</span> {{ title }}
           <span *ngIf="subtitle" class="subtitle">({{ subtitle }})</span>
         </h3>
-        <button *ngIf="viewEnabled && state === 'ready'" type="button" class="view-button"
-                [attr.aria-expanded]="expanded" (click)="toggleView()">
-          {{ expanded ? 'Close view' : 'View' }}
-        </button>
+        <div class="chart-header-actions">
+          <button *ngIf="state === 'ready'" type="button" class="export-button"
+                  [disabled]="exporting" [attr.aria-label]="exportError ? 'PDF export failed. Retry export' : 'Export chart as PDF'"
+                  (click)="exportPdf()">
+            {{ exportError ? 'Retry PDF' : exporting ? 'Preparing...' : 'Export PDF' }}
+          </button>
+          <button *ngIf="viewEnabled && state === 'ready'" type="button" class="view-button"
+                  [attr.aria-expanded]="expanded" (click)="toggleView()">
+            {{ expanded ? 'Close view' : 'View' }}
+          </button>
+        </div>
       </header>
 
       <div class="chart-body">
@@ -81,7 +91,7 @@ export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
              *ngIf="state === 'ready' && options">
           <div [style.min-width.px]="scrollMinWidth > 0 ? scrollMinWidth : null"
                [style.height.px]="scrollMinHeight > 0 ? scrollMinHeight : null">
-            <apx-chart
+            <apx-chart #chart
               [series]="options.series"
               [chart]="renderedChart"
               [xaxis]="options.xaxis!"
@@ -105,6 +115,8 @@ export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
   styleUrl: './chart-card.component.scss'
 })
 export class ChartCardComponent {
+  @ViewChild('chart') private chartComponent?: ChartComponent;
+
   @Input() title = '';
   @Input() subtitle = '';
   @Input() index?: number;
@@ -119,6 +131,9 @@ export class ChartCardComponent {
   @Input() scrollMinHeight = 0;
   @Input() viewEnabled = false;
 
+  private readonly chartExport = inject(ChartExportService);
+  exporting = false;
+  exportError = false;
   expanded = false;
   private expandedChartSource: ApexChart | null = null;
   private expandedChartValue: ApexChart | null = null;
@@ -140,6 +155,21 @@ export class ChartCardComponent {
 
   closeView(): void {
     this.expanded = false;
+  }
+
+  async exportPdf(): Promise<void> {
+    if (this.exporting || !this.chartComponent) { return; }
+    this.exporting = true;
+    this.exportError = false;
+    try {
+      const image = await this.chartComponent.dataURI({ scale: 2 });
+      if (!image || !('imgURI' in image)) { throw new Error('Chart image unavailable'); }
+      await firstValueFrom(this.chartExport.exportPdf(this.title, image.imgURI));
+    } catch {
+      this.exportError = true;
+    } finally {
+      this.exporting = false;
+    }
   }
 
   @HostListener('document:keydown.escape')

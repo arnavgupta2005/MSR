@@ -74,6 +74,21 @@
   &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 }
 
+.export-button {
+  flex: 0 0 auto;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+
+  &:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+  &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  &:disabled { opacity: 0.65; cursor: wait; }
+}
+
 // Internal scroll grid of small-multiple tiles.
 .panel-scroll {
   display: grid;
@@ -133,6 +148,13 @@
     justify-content: space-between;
     gap: var(--space-3);
     min-height: 34px;
+  }
+
+  .panel-tile-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 0 0 auto;
   }
 
   .panel-tile-title {

@@ -1,5 +1,44 @@
 @use '../../../../styles/dashboard';
 
+.product-bar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+
+	.inline-label {
+		font-size: var(--fs-sm);
+		font-weight: 600;
+		color: var(--color-navy);
+		margin-bottom: var(--space-1);
+	}
+
+	app-sprint-multi-select {
+		display: flex;
+	}
+}
+
+.kpi-grid {
+	margin-bottom: var(--space-6);
+
+	.clickable {
+		cursor: pointer;
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
+		border-radius: var(--radius-md);
+
+		&:hover {
+			transform: translateY(-4px);
+		}
+
+		&:active {
+			transform: translateY(-2px);
+		}
+
+		app-kpi-card {
+			display: block;
+		}
+	}
+}
+
 .resource-team-filter {
 	display: flex;
 	align-items: center;

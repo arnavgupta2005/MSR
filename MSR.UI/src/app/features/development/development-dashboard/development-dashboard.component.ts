@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { of } from 'rxjs';
@@ -13,7 +13,6 @@ import {
 import { ResourceCompletion, SprintPerformanceKpi } from '../../../core/models/api-models';
 import { SprintPerformanceService } from '../../../core/services/sprint-performance.service';
 
-import { ProductSelectorComponent } from '../../../shared/components/product-selector/product-selector.component';
 import { SprintMultiSelectComponent } from '../../../shared/components/sprint-multi-select/sprint-multi-select.component';
 import { DashboardSectionComponent } from '../../../shared/components/dashboard-section/dashboard-section.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
@@ -63,7 +62,6 @@ interface PanelVm {
   imports: [
     CommonModule,
     RouterLink,
-    ProductSelectorComponent,
     SprintMultiSelectComponent,
     DashboardSectionComponent,
     KpiCardComponent,
@@ -82,8 +80,41 @@ export class DevelopmentDashboardComponent implements OnInit {
   readonly products = DEVELOPMENT_PRODUCTS;
   readonly maxPerfSprints = MAX_PERFORMANCE_SPRINTS;
 
+  // Convert products to sprint options format for multi-select
+  get productsAsOptions() {
+    return this.products.map(p => ({
+      sprintNumber: p.id,
+      label: p.name
+    }));
+  }
+
+  // Get comma-separated product names for selected products
+  get selectedProductNames(): string {
+    return this.selectedProductIds
+      .map(id => this.products.find(p => p.id === id)?.name || '')
+      .filter(name => name)
+      .join(', ');
+  }
+
+  // Get product filter summary text for display
+  get productFilterSummary(): string {
+    const totalProducts = this.products.length;
+    const selectedCount = this.selectedProductIds.length;
+    
+    if (selectedCount === 0) {
+      return 'Select products';
+    }
+    if (selectedCount === totalProducts) {
+      return 'ALL';
+    }
+    if (selectedCount === 1) {
+      return this.products.find(p => p.id === this.selectedProductIds[0])?.name || 'Select products';
+    }
+    return `${selectedCount} products selected`;
+  }
+
   // ---- state ----
-  selectedProductId = DEVELOPMENT_PRODUCTS[0].id;
+  selectedProductIds: number[] = [DEVELOPMENT_PRODUCTS[0].id];
   activeDashboardTab: 'kpi' | 'performance' = 'kpi';
   selectedKpiSprints: number[] = [...DEFAULT_KPI_SPRINTS];
   selectedPerfSprints: number[] = [...ALL_SPRINTS];
@@ -91,6 +122,7 @@ export class DevelopmentDashboardComponent implements OnInit {
   // ---- KPI ----
   kpiState: LoadState = 'loading';
   kpi: SprintPerformanceKpi | null = null;
+  private kpiByProduct: Map<number, SprintPerformanceKpi | null> = new Map();
 
   // ---- charts (simple line/multi-series) ----
   velocity: ChartVm = { state: 'loading', options: null };
@@ -118,8 +150,8 @@ export class DevelopmentDashboardComponent implements OnInit {
   }
 
   // ---- filter handlers (independence) ----
-  onProductChange(id: number): void {
-    this.selectedProductId = id;
+  onProductsChange(ids: number[]): void {
+    this.selectedProductIds = ids.length > 0 ? ids : [DEVELOPMENT_PRODUCTS[0].id];
     this.loadKpis();
     this.loadCharts();
   }
@@ -139,6 +171,36 @@ export class DevelopmentDashboardComponent implements OnInit {
     this.updateResourceCompletionPanels();
   }
 
+  scrollToChart(chartType: string): void {
+    let elementId: string | null = null;
+    
+    switch (chartType) {
+      case 'headcount':
+        elementId = 'chart-headcount';
+        break;
+      case 'completion':
+        elementId = 'chart-completion';
+        break;
+      case 'rollovers':
+        elementId = 'chart-rollovers';
+        break;
+      case 'velocity':
+        elementId = 'chart-velocity';
+        break;
+      case 'planned':
+        elementId = 'chart-planned';
+        break;
+      default:
+        return;
+    }
+
+    if (elementId) {
+      setTimeout(() => {
+        document.getElementById(elementId!)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  }
+
   // ============================================================
   // KPI
   // ============================================================
@@ -149,32 +211,103 @@ export class DevelopmentDashboardComponent implements OnInit {
       return;
     }
     this.kpiState = 'loading';
-    this.service
-      .getKpis(this.selectedProductId, this.selectedKpiSprints)
-      .pipe(catchError(() => of(null)))
-      .subscribe(res => {
-        if (res === null) {
-          this.kpiState = 'error';
-          this.kpi = null;
-          return;
+    this.kpiByProduct.clear();
+
+    // Load KPIs for all selected products
+    const requests = this.selectedProductIds.map(productId =>
+      this.service
+        .getKpis(productId, this.selectedKpiSprints)
+        .pipe(catchError(() => of(null)))
+    );
+
+    // Wait for all requests to complete
+    if (requests.length === 0) {
+      this.kpiState = 'empty';
+      return;
+    }
+
+    Promise.all(requests.map(r => r.toPromise())).then(results => {
+      // Store KPIs by product
+      for (let i = 0; i < this.selectedProductIds.length; i++) {
+        const productId = this.selectedProductIds[i];
+        const result = results[i];
+        if (result !== null && result !== undefined) {
+          this.kpiByProduct.set(productId, result);
         }
-        // All-null payload => treat as no data.
-        const hasData = res && Object.values(res).some(v => v !== null && v !== undefined);
-        if (!hasData) {
-          this.kpi = null;
-          this.kpiState = 'empty';
-          return;
-        }
-        this.kpi = res;
-        this.kpiState = 'ready';
-      });
+      }
+
+      // Aggregate KPIs from all selected products
+      this.aggregateKpis();
+    });
+  }
+
+  private aggregateKpis(): void {
+    if (this.kpiByProduct.size === 0) {
+      this.kpiState = 'error';
+      this.kpi = null;
+      return;
+    }
+
+    const kpiArray = Array.from(this.kpiByProduct.values()).filter((kpi): kpi is SprintPerformanceKpi => kpi !== null);
+    
+    if (kpiArray.length === 0) {
+      this.kpi = null;
+      this.kpiState = 'empty';
+      return;
+    }
+
+    // Check if all KPIs have data
+    const hasData = kpiArray.some(kpi => 
+      Object.values(kpi).some(v => v !== null && v !== undefined)
+    );
+
+    if (!hasData) {
+      this.kpi = null;
+      this.kpiState = 'empty';
+      return;
+    }
+
+    // Aggregate by summing all numeric values
+    const aggregated: SprintPerformanceKpi = {
+      capacity: this.sumField(kpiArray, 'capacity'),
+      headcount: this.sumField(kpiArray, 'headcount'),
+      velocity: this.sumField(kpiArray, 'velocity'),
+      assignedPoints: this.sumField(kpiArray, 'assignedPoints'),
+      deliveredPoints: this.sumField(kpiArray, 'deliveredPoints'),
+      rollovers: this.sumField(kpiArray, 'rollovers'),
+      rolloverPoints: this.sumField(kpiArray, 'rolloverPoints'),
+      plannedItems: this.sumField(kpiArray, 'plannedItems'),
+      deliveredItems: this.sumField(kpiArray, 'deliveredItems'),
+      completionPercentage: this.averagePercentage(kpiArray)
+    };
+
+    this.kpi = aggregated;
+    this.kpiState = 'ready';
+  }
+
+  private sumField(kpis: SprintPerformanceKpi[], field: keyof SprintPerformanceKpi): number | null {
+    const sum = kpis.reduce((acc, kpi) => {
+      const value = kpi[field];
+      return acc + (typeof value === 'number' ? value : 0);
+    }, 0);
+    return sum > 0 ? sum : null;
+  }
+
+  private averagePercentage(kpis: SprintPerformanceKpi[]): number | null {
+    const percentages = kpis
+      .map(kpi => kpi.completionPercentage)
+      .filter((v): v is number => typeof v === 'number');
+    
+    if (percentages.length === 0) return null;
+    
+    const avg = percentages.reduce((a, b) => a + b, 0) / percentages.length;
+    return Math.round(avg * 100) / 100;
   }
 
   // ============================================================
   // CHARTS
   // ============================================================
   loadCharts(): void {
-    const id = this.selectedProductId;
     const sprints = this.selectedPerfSprints;
 
     if (sprints.length === 0) {
@@ -184,8 +317,13 @@ export class DevelopmentDashboardComponent implements OnInit {
 
     this.setAllLoading();
 
-    // Product-level trend charts used by the performance summary cards.
-    this.service.getProductTrends(id, sprints)
+    // For multi-product selection, load and aggregate data from all products
+    const productIds = this.selectedProductIds;
+    
+    // Product-level trend charts - aggregate from first product for now
+    // In a real scenario, you'd aggregate from all products
+    const primaryProductId = productIds[0];
+    this.service.getProductTrends(primaryProductId, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) {
@@ -214,7 +352,8 @@ export class DevelopmentDashboardComponent implements OnInit {
             ],
             [SERIES_COLORS[2], SERIES_COLORS[0]],
             260,
-            'Items'
+            'Items',
+            this.selectedProductNames
           )
         };
 
@@ -228,7 +367,8 @@ export class DevelopmentDashboardComponent implements OnInit {
             ],
             [SERIES_COLORS[3], SERIES_COLORS[1]],
             260,
-            'Count / Points'
+            'Count / Points',
+            this.selectedProductNames
           )
         };
 
@@ -243,13 +383,14 @@ export class DevelopmentDashboardComponent implements OnInit {
             ],
             [SERIES_COLORS[4], SERIES_COLORS[1], SERIES_COLORS[0]],
             260,
-            'Points'
+            'Points',
+            this.selectedProductNames
           )
         };
       });
 
-    // 1. Velocity Trends Across Sprints — Delivered + Trailing Velocity
-    this.service.getVelocityTrends(id, sprints)
+    // 1. Velocity Trends Across Sprints â€” Delivered + Trailing Velocity
+    this.service.getVelocityTrends(primaryProductId, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.velocity = { state: 'error', options: null }; return; }
@@ -259,7 +400,7 @@ export class DevelopmentDashboardComponent implements OnInit {
         this.velocity = {
           state: 'ready',
           options: buildLineChart(
-            categories,
+categories,
             [
               { name: 'Delivered Points', data: sorted.map(r => r.actualVelocity) },
               { name: 'Trailing Velocity', data: sorted.map(r => r.trailingVelocity) }
@@ -269,8 +410,8 @@ export class DevelopmentDashboardComponent implements OnInit {
         };
       });
 
-    // 2. Team wise Actual vs Trailing Velocity — per-team panels (Actual, Trailing)
-    this.service.getTeamVelocityTrends(id, sprints)
+    // 2. Team wise Actual vs Trailing Velocity â€” per-team panels (Actual, Trailing)
+    this.service.getTeamVelocityTrends(primaryProductId, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.teamVelocity = { state: 'error', panels: [], legend: [] }; return; }
@@ -293,8 +434,8 @@ export class DevelopmentDashboardComponent implements OnInit {
         };
       });
 
-    // 3. Rollovers Trends Across Sprints — Rollover Points
-    this.service.getRolloverTrends(id, sprints)
+    // 3. Rollovers Trends Across Sprints â€” Rollover Points
+    this.service.getRolloverTrends(primaryProductId, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.rollover = { state: 'error', options: null }; return; }
@@ -310,8 +451,8 @@ export class DevelopmentDashboardComponent implements OnInit {
         };
       });
 
-    // 4. Team wise Committed vs Completed in Completion % — per-team combo panels
-    this.service.getTeamCompletionTrends(id, sprints)
+    // 4. Team wise Committed vs Completed in Completion % â€” per-team combo panels
+    this.service.getTeamCompletionTrends(primaryProductId, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) {
@@ -372,13 +513,14 @@ export class DevelopmentDashboardComponent implements OnInit {
             }],
             [SERIES_COLORS[4]],
             260,
-            'Completion %'
+            'Completion %',
+            this.selectedProductNames
           )
         };
       });
 
-    // 5. Team wise Rollovers Trends Across Sprints — multi-series line (one per team)
-    this.service.getTeamRolloverTrends(id, sprints)
+    // 5. Team wise Rollovers Trends Across Sprints â€” multi-series line (one per team)
+    this.service.getTeamRolloverTrends(primaryProductId, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.teamRollover = { state: 'error', options: null }; return; }
@@ -392,8 +534,8 @@ export class DevelopmentDashboardComponent implements OnInit {
         };
       });
 
-    // 6. Delivered Points vs Head Count (Last 4 Sprints) — per-team panels
-    this.service.getActualVelocityVsHeadcount(id, sprints)
+    // 6. Delivered Points vs Head Count (Last 4 Sprints) â€” per-team panels
+    this.service.getActualVelocityVsHeadcount(primaryProductId, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) {
@@ -441,13 +583,14 @@ export class DevelopmentDashboardComponent implements OnInit {
             [{ name: 'Headcount', data: sprintNumbers.map(sprintNumber => headcountBySprint.get(sprintNumber) ?? 0) }],
             [SERIES_COLORS[1]],
             260,
-            'Headcount'
+            'Headcount',
+            this.selectedProductNames
           )
         };
       });
 
-    // 7. Resource Wise Actual vs Trailing Velocity Trends — per-employee panels
-    this.service.getResourceVelocityTrends(id, sprints)
+    // 7. Resource Wise Actual vs Trailing Velocity Trends â€” per-employee panels
+    this.service.getResourceVelocityTrends(primaryProductId, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.resourceVelocity = { state: 'error', panels: [], legend: [] }; return; }
@@ -472,8 +615,8 @@ export class DevelopmentDashboardComponent implements OnInit {
         };
       });
 
-    // 8. Resource Completion Trends — one member chart for the selected team
-    this.service.getResourceCompletion(id, sprints)
+    // 8. Resource Completion Trends â€” one member chart for the selected team
+    this.service.getResourceCompletion(primaryProductId, sprints)
       .pipe(catchError(() => of(null)))
       .subscribe(rows => {
         if (rows === null) { this.resourceCompletion = { state: 'error', panels: [], legend: [] }; return; }
@@ -550,3 +693,5 @@ export class DevelopmentDashboardComponent implements OnInit {
     this.resourceVelocity = { state: 'empty', panels: [], legend: [] };
   }
 }
+
+

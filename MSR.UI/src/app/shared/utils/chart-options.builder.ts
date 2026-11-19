@@ -95,7 +95,8 @@ export function buildLineChart(
   series: { name: string; data: (number | null)[] }[],
   colors: string[],
   height = 240,
-  yAxisTitle = ''
+  yAxisTitle = '',
+  productName?: string
 ): ChartOptions {
   return {
     series,
@@ -108,7 +109,9 @@ export function buildLineChart(
     yaxis: yAxisTitle ? yTitle(yAxisTitle) : { ...baseAxisStyle },
     grid: baseGrid,
     legend: { ...baseLegend, show: series.length > 1 },
-    tooltip: baseTooltip
+    tooltip: productName 
+      ? powerBiTooltip({ headerGroup: productName })
+      : baseTooltip
   };
 }
 
@@ -393,7 +396,8 @@ export function buildMultiLineChart(
   series: { name: string; data: (number | null)[] }[],
   colors: string[],
   height = 240,
-  yAxisTitle = ''
+  yAxisTitle = '',
+  productName?: string
 ): ChartOptions {
   return {
     series,
@@ -412,7 +416,9 @@ export function buildMultiLineChart(
     yaxis: yAxisTitle ? yTitle(yAxisTitle) : { ...baseAxisStyle },
     grid: baseGrid,
     legend: { ...baseLegend, show: series.length > 1 },
-    tooltip: { ...baseTooltip, shared: true, intersect: false, followCursor: true }
+    tooltip: productName
+      ? powerBiTooltip({ headerGroup: productName })
+      : { ...baseTooltip, shared: true, intersect: false, followCursor: true }
   };
 }
 

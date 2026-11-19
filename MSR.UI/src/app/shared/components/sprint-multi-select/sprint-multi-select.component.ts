@@ -48,6 +48,8 @@ export class SprintMultiSelectComponent {
   @Input() label = '';
   /** Maximum selectable sprints. 0 = unlimited. */
   @Input() max = 0;
+  /** Custom text to display when all items are selected. If not provided, defaults to 'All Sprints'. */
+  @Input() allSelectedLabel = 'All Sprints';
   @Output() selectedChange = new EventEmitter<number[]>();
 
   open = false;
@@ -69,12 +71,17 @@ export class SprintMultiSelectComponent {
       return 'Select sprints';
     }
     if (this.allSelected) {
-      return 'All Sprints';
+      return this.allSelectedLabel;
     }
     if (this.selected.length === 1) {
+      // Check if allSelectedLabel contains product names (for product filters)
+      // If so, use it directly instead of "Sprint X"
+      if (this.allSelectedLabel && !this.allSelectedLabel.startsWith('All')) {
+        return this.allSelectedLabel;
+      }
       return `Sprint ${this.selected[0]}`;
     }
-    return `${this.selected.length} sprints selected`;
+    return this.allSelectedLabel || `${this.selected.length} sprints selected`;
   }
 
   toggle(): void {

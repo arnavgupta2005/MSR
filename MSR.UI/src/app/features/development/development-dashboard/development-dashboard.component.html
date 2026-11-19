@@ -12,13 +12,15 @@
     <p>Monthly Sprint Review - Sprint Performance</p>
   </header>
 
-  <!-- Common Product filter -->
+  <!-- Common Product filter (Multi-select) -->
   <div class="card product-bar">
-    <app-product-selector
-      [products]="products"
-      [selectedId]="selectedProductId"
-      (selectedIdChange)="onProductChange($event)">
-    </app-product-selector>
+    <span class="inline-label">Product</span>
+    <app-sprint-multi-select
+      [sprints]="productsAsOptions"
+      [selected]="selectedProductIds"
+      [allSelectedLabel]="productFilterSummary"
+      (selectedChange)="onProductsChange($event)">
+    </app-sprint-multi-select>
   </div>
 
   <nav class="dashboard-tabs" role="tablist" aria-label="Dashboard sections">
@@ -49,33 +51,88 @@
     </app-empty-state>
 
     <div class="kpi-grid" *ngIf="kpiState === 'ready' && kpi">
-      <app-kpi-card label="Headcount" [value]="kpi.headcount" [unavailable]="kpi.headcount === null" theme="teal">
-        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-      </app-kpi-card>
-      <app-kpi-card label="Velocity" [value]="kpi.velocity" [unavailable]="kpi.velocity === null" theme="purple">
-        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"></path></svg>
-      </app-kpi-card>
-      <app-kpi-card label="Assigned Points" [value]="kpi.assignedPoints" [unavailable]="kpi.assignedPoints === null" theme="blue">
-        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
-      </app-kpi-card>
-      <app-kpi-card label="Delivered Points" [value]="kpi.deliveredPoints" [unavailable]="kpi.deliveredPoints === null" theme="green">
-        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
-      </app-kpi-card>
-      <app-kpi-card label="Rollovers" [value]="kpi.rollovers" [unavailable]="kpi.rollovers === null" theme="orange">
-        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-      </app-kpi-card>
-      <app-kpi-card label="Rollover Points" [value]="kpi.rolloverPoints" [unavailable]="kpi.rolloverPoints === null" theme="orange">
-        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-      </app-kpi-card>
-      <app-kpi-card label="Planned Items" [value]="kpi.plannedItems" [unavailable]="kpi.plannedItems === null" theme="blue">
-        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="13" y2="17"></line></svg>
-      </app-kpi-card>
-      <app-kpi-card label="Delivered Items" [value]="kpi.deliveredItems" [unavailable]="kpi.deliveredItems === null" theme="green">
-        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-      </app-kpi-card>
-      <app-kpi-card label="Completion %" [value]="kpi.completionPercentage" [unavailable]="kpi.completionPercentage === null" [isPercentage]="true" theme="teal">
-        <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
-      </app-kpi-card>
+      <div class="clickable" (click)="scrollToChart('headcount')">
+        <app-kpi-card label="Headcount" [value]="kpi.headcount" [unavailable]="kpi.headcount === null" theme="teal">
+          <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </app-kpi-card>
+      </div>
+      <div class="clickable" (click)="scrollToChart('velocity')">
+        <app-kpi-card label="Velocity" [value]="kpi.velocity" [unavailable]="kpi.velocity === null" theme="purple">
+          <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"></path></svg>
+        </app-kpi-card>
+      </div>
+      <div class="clickable" (click)="scrollToChart('velocity')">
+        <app-kpi-card label="Assigned Points" [value]="kpi.assignedPoints" [unavailable]="kpi.assignedPoints === null" theme="blue">
+          <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
+        </app-kpi-card>
+      </div>
+      <div class="clickable" (click)="scrollToChart('velocity')">
+        <app-kpi-card label="Delivered Points" [value]="kpi.deliveredPoints" [unavailable]="kpi.deliveredPoints === null" theme="green">
+          <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+        </app-kpi-card>
+      </div>
+      <div class="clickable" (click)="scrollToChart('rollovers')">
+        <app-kpi-card label="Rollovers" [value]="kpi.rollovers" [unavailable]="kpi.rollovers === null" theme="orange">
+          <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+        </app-kpi-card>
+      </div>
+      <div class="clickable" (click)="scrollToChart('rollovers')">
+        <app-kpi-card label="Rollover Points" [value]="kpi.rolloverPoints" [unavailable]="kpi.rolloverPoints === null" theme="orange">
+          <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+        </app-kpi-card>
+      </div>
+      <div class="clickable" (click)="scrollToChart('planned')">
+        <app-kpi-card label="Planned Items" [value]="kpi.plannedItems" [unavailable]="kpi.plannedItems === null" theme="blue">
+          <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="13" y2="17"></line></svg>
+        </app-kpi-card>
+      </div>
+      <div class="clickable" (click)="scrollToChart('planned')">
+        <app-kpi-card label="Delivered Items" [value]="kpi.deliveredItems" [unavailable]="kpi.deliveredItems === null" theme="green">
+          <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        </app-kpi-card>
+      </div>
+      <div class="clickable" (click)="scrollToChart('completion')">
+        <app-kpi-card label="Completion %" [value]="kpi.completionPercentage" [unavailable]="kpi.completionPercentage === null" [isPercentage]="true" theme="teal">
+          <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+        </app-kpi-card>
+      </div>
+    </div>
+
+    <div class="chart-grid" *ngIf="kpiState === 'ready'">
+      <!-- 1. Headcount Trends Across Sprints -->
+      <div id="chart-headcount" class="span-12">
+        <app-chart-card class="span-12" [index]="1" title="Headcount Trends Across Sprints"
+          [state]="headcountTrend.state" [options]="headcountTrend.options" [chartHeight]="260"
+          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+      </div>
+
+      <!-- 2. Completion % Trends Across Sprints -->
+      <div id="chart-completion" class="span-12">
+        <app-chart-card class="span-12" [index]="2" title="Completion % Trends Across Sprints"
+          [state]="completionTrend.state" [options]="completionTrend.options" [chartHeight]="260"
+          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+      </div>
+
+      <!-- 3. Rollovers vs Rollover Points Across Sprints -->
+      <div id="chart-rollovers" class="span-12">
+        <app-chart-card class="span-12" [index]="3" title="Rollovers vs Rollover Points Across Sprints"
+          [state]="rolloverRolloverPointsTrend.state" [options]="rolloverRolloverPointsTrend.options" [chartHeight]="260"
+          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+      </div>
+
+      <!-- 4. Velocity vs Assigned Points vs Delivered Points -->
+      <div id="chart-velocity" class="span-12">
+        <app-chart-card class="span-12" [index]="4" title="Velocity vs Assigned Points vs Delivered Points Across Sprints"
+          [state]="velocityAssignedDeliveredTrend.state" [options]="velocityAssignedDeliveredTrend.options" [chartHeight]="260"
+          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+      </div>
+
+      <!-- 5. Planned Items vs Delivered Items Across Sprints -->
+      <div id="chart-planned" class="span-12">
+        <app-chart-card class="span-12" [index]="5" title="Planned Items vs Delivered Items Across Sprints"
+          [state]="plannedDeliveredItemsTrend.state" [options]="plannedDeliveredItemsTrend.options" [chartHeight]="260"
+          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+      </div>
     </div>
   </app-dashboard-section>
 
@@ -100,31 +157,6 @@
       <app-chart-panel-grid class="span-12" [index]="2" title="Resource Wise Actual vs Trailing Velocity Trends"
         [state]="resourceVelocity.state" [panels]="resourceVelocity.panels" [legend]="resourceVelocity.legend"
         [panelMinWidth]="220" [horizontal]="true" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-panel-grid>
-
-      <!-- 3. Headcount Trends Across Sprints -->
-      <app-chart-card class="span-12" [index]="3" title="Headcount Trends Across Sprints"
-        [state]="headcountTrend.state" [options]="headcountTrend.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
-
-      <!-- 4. Completion % Trends Across Sprints -->
-      <app-chart-card class="span-12" [index]="4" title="Completion % Trends Across Sprints"
-        [state]="completionTrend.state" [options]="completionTrend.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
-
-      <!-- 5. Planned Items vs Delivered Items Across Sprints -->
-      <app-chart-card class="span-12" [index]="5" title="Planned Items vs Delivered Items Across Sprints"
-        [state]="plannedDeliveredItemsTrend.state" [options]="plannedDeliveredItemsTrend.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
-
-      <!-- 6. Rollovers vs Rollover Points Across Sprints -->
-      <app-chart-card class="span-12" [index]="6" title="Rollovers vs Rollover Points Across Sprints"
-        [state]="rolloverRolloverPointsTrend.state" [options]="rolloverRolloverPointsTrend.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
-
-      <!-- 7. Velocity vs Assigned Points vs Delivered Points -->
-      <app-chart-card class="span-12" [index]="7" title="Velocity vs Assigned Points vs Delivered Points Across Sprints"
-        [state]="velocityAssignedDeliveredTrend.state" [options]="velocityAssignedDeliveredTrend.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
 
       <!-- 8. Velocity Trends Across Sprints -->
       <app-chart-card class="span-12" [index]="8" title="Velocity Trends Across Sprints"

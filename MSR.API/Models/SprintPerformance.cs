@@ -36,6 +36,11 @@ namespace MSR.API.Models
         public int? Velocity { get; set; }
         public int? ActualVelocity { get; set; }
         public int? TrailingVelocity { get; set; }
+        public string? Dip1Headcount { get; set; }
+        public string? Dip2Completion { get; set; }
+        public string? Dip3Rollovers { get; set; }
+        public string? Dip4PlannedItemsDeliveredItems { get; set; }
+        public string? Dip5AssignedDeliveredPointsVelocity { get; set; }
 
         // Navigation properties
         public Sprint? Sprint { get; set; }

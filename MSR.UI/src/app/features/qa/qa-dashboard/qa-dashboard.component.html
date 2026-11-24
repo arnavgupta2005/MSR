@@ -15,8 +15,10 @@
   <div class="card product-bar">
     <app-product-selector
       [products]="products"
-      [selectedId]="selectedProductId"
-      (selectedIdChange)="onProductChange($event)">
+      [multiple]="true"
+      [includeAllOption]="true"
+      [selectedIds]="selectedProductIds"
+      (selectedIdsChange)="onProductsChange($event)">
     </app-product-selector>
   </div>
 
@@ -40,14 +42,14 @@
       </app-sprint-multi-select>
     </div>
 
-    <app-loading-state *ngIf="kpiState === 'loading'" message="Loading KPIs…"></app-loading-state>
-    <app-error-state *ngIf="kpiState === 'error'" (retry)="loadKpis()"></app-error-state>
+    <app-loading-state *ngIf="kpiState === 'loading' && !kpi" message="Loading KPIs…"></app-loading-state>
+    <app-error-state *ngIf="kpiState === 'error' && !kpi" (retry)="loadKpis()"></app-error-state>
     <app-empty-state
-      *ngIf="kpiState === 'empty'"
+      *ngIf="kpiState === 'empty' && !kpi"
       message="No sprints selected. Choose one or more sprints to view KPIs.">
     </app-empty-state>
 
-    <div class="kpi-grid" *ngIf="kpiState === 'ready' && kpi">
+    <div class="kpi-grid" *ngIf="kpi">
       <app-kpi-card label="Total Story Points" [value]="kpi.totalStoryPoints" theme="orange">
         <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
       </app-kpi-card>

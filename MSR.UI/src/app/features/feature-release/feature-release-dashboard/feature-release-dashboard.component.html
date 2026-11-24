@@ -14,12 +14,11 @@
 
   <!-- Product filter -->
   <div class="card product-bar">
-    <div class="product-selector">
-      <label class="field-label" for="feature-product">Product</label>
-      <select id="feature-product" class="form-select" [value]="selectedProduct" (change)="onProductChange($event)">
-        <option *ngFor="let p of products" [value]="p.key">{{ p.label }}</option>
-      </select>
-    </div>
+    <app-product-selector
+      [products]="productChoices"
+      [selectedId]="selectedProduct"
+      (selectedIdChange)="onProductChange($event)">
+    </app-product-selector>
   </div>
 
   <!-- Table -->

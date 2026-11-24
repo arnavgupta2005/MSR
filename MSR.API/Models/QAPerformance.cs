@@ -30,6 +30,11 @@ namespace MSR.API.Models
         public int? QAIterations { get; set; }
 
         public int? QAObservations { get; set; }
+        public string? Dip1Headcount { get; set; }
+        public string? Dip2Completion { get; set; }
+        public string? Dip3Rollovers { get; set; }
+        public string? Dip4PlannedItemsDeliveredItems { get; set; }
+        public string? Dip5AssignedDeliveredPointsVelocity { get; set; }
 
         // Navigation properties
         public Sprint? Sprint { get; set; }

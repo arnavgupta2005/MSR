@@ -8,6 +8,7 @@ import { FEATURE_PRODUCTS } from '../../../core/config/report.config';
 import { FeatureRelease } from '../../../core/models/api-models';
 import { FeatureReleaseService } from '../../../core/services/feature-release.service';
 
+import { ProductSelectorComponent } from '../../../shared/components/product-selector/product-selector.component';
 import { SprintMultiSelectComponent } from '../../../shared/components/sprint-multi-select/sprint-multi-select.component';
 import { LoadingStateComponent } from '../../../shared/components/loading-state/loading-state.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -21,6 +22,7 @@ type LoadState = 'loading' | 'ready' | 'empty' | 'error';
   imports: [
     CommonModule,
     RouterLink,
+    ProductSelectorComponent,
     SprintMultiSelectComponent,
     LoadingStateComponent,
     EmptyStateComponent,
@@ -32,7 +34,7 @@ type LoadState = 'loading' | 'ready' | 'empty' | 'error';
 export class FeatureReleaseDashboardComponent implements OnInit {
   private readonly service = inject(FeatureReleaseService);
 
-  readonly products = FEATURE_PRODUCTS;
+  readonly productChoices = FEATURE_PRODUCTS.map(p => ({ id: p.key, name: p.label }));
 
   selectedProduct = FEATURE_PRODUCTS[0].key;
   state: LoadState = 'loading';
@@ -46,8 +48,8 @@ export class FeatureReleaseDashboardComponent implements OnInit {
     this.load();
   }
 
-  onProductChange(event: Event): void {
-    this.selectedProduct = (event.target as HTMLSelectElement).value;
+  onProductChange(id: string | number): void {
+    this.selectedProduct = String(id);
     this.load();
   }
 

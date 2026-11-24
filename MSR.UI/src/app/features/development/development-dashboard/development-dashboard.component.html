@@ -12,15 +12,15 @@
     <p>Monthly Sprint Review - Sprint Performance</p>
   </header>
 
-  <!-- Common Product filter (Multi-select) -->
+  <!-- Common Product filter (horizontal checkboxes) -->
   <div class="card product-bar">
-    <span class="inline-label">Product</span>
-    <app-sprint-multi-select
-      [sprints]="productsAsOptions"
-      [selected]="selectedProductIds"
-      [allSelectedLabel]="productFilterSummary"
-      (selectedChange)="onProductsChange($event)">
-    </app-sprint-multi-select>
+    <app-product-selector
+      [products]="products"
+      [multiple]="true"
+      [includeAllOption]="true"
+      [selectedIds]="selectedProductKeys"
+      (selectedIdsChange)="onProductsChange($event)">
+    </app-product-selector>
   </div>
 
   <nav class="dashboard-tabs" role="tablist" aria-label="Dashboard sections">
@@ -43,14 +43,14 @@
       </app-sprint-multi-select>
     </div>
 
-    <app-loading-state *ngIf="kpiState === 'loading'" message="Loading KPIs…"></app-loading-state>
-    <app-error-state *ngIf="kpiState === 'error'" (retry)="loadKpis()"></app-error-state>
+    <app-loading-state *ngIf="kpiState === 'loading' && !kpi" message="Loading KPIs…"></app-loading-state>
+    <app-error-state *ngIf="kpiState === 'error' && !kpi" (retry)="loadKpis()"></app-error-state>
     <app-empty-state
-      *ngIf="kpiState === 'empty'"
+      *ngIf="kpiState === 'empty' && !kpi"
       message="No KPI data available for the selected sprint(s).">
     </app-empty-state>
 
-    <div class="kpi-grid" *ngIf="kpiState === 'ready' && kpi">
+    <div class="kpi-grid" *ngIf="kpi">
       <div class="clickable" (click)="scrollToChart('headcount')">
         <app-kpi-card label="Headcount" [value]="kpi.headcount" [unavailable]="kpi.headcount === null" theme="teal">
           <svg icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -103,35 +103,35 @@
       <div id="chart-headcount" class="span-12">
         <app-chart-card class="span-12" [index]="1" title="Headcount Trends Across Sprints"
           [state]="headcountTrend.state" [options]="headcountTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
 
       <!-- 2. Completion % Trends Across Sprints -->
       <div id="chart-completion" class="span-12">
         <app-chart-card class="span-12" [index]="2" title="Completion % Trends Across Sprints"
           [state]="completionTrend.state" [options]="completionTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
 
       <!-- 3. Rollovers vs Rollover Points Across Sprints -->
       <div id="chart-rollovers" class="span-12">
         <app-chart-card class="span-12" [index]="3" title="Rollovers vs Rollover Points Across Sprints"
           [state]="rolloverRolloverPointsTrend.state" [options]="rolloverRolloverPointsTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
 
       <!-- 4. Velocity vs Assigned Points vs Delivered Points -->
       <div id="chart-velocity" class="span-12">
         <app-chart-card class="span-12" [index]="4" title="Velocity vs Assigned Points vs Delivered Points Across Sprints"
           [state]="velocityAssignedDeliveredTrend.state" [options]="velocityAssignedDeliveredTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
 
       <!-- 5. Planned Items vs Delivered Items Across Sprints -->
       <div id="chart-planned" class="span-12">
         <app-chart-card class="span-12" [index]="5" title="Planned Items vs Delivered Items Across Sprints"
           [state]="plannedDeliveredItemsTrend.state" [options]="plannedDeliveredItemsTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
     </div>
   </app-dashboard-section>
@@ -151,43 +151,43 @@
       <!-- Promoted: Delivered Points vs Head Count -->
       <app-chart-panel-grid class="span-12" [index]="1" title="Delivered Points vs Head Count"
         [state]="velocityHeadcount.state" [panels]="velocityHeadcount.panels" [legend]="velocityHeadcount.legend"
-        [panelMinWidth]="260" [horizontal]="true" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="260" [horizontal]="true" [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
 
       <!-- Promoted: Resource Wise Actual vs Trailing Velocity Trends -->
       <app-chart-panel-grid class="span-12" [index]="2" title="Resource Wise Actual vs Trailing Velocity Trends"
         [state]="resourceVelocity.state" [panels]="resourceVelocity.panels" [legend]="resourceVelocity.legend"
-        [panelMinWidth]="220" [horizontal]="true" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="220" [horizontal]="true" [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
 
       <!-- 8. Velocity Trends Across Sprints -->
       <app-chart-card class="span-12" [index]="8" title="Velocity Trends Across Sprints"
         [state]="velocity.state" [options]="velocity.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+        [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-card>
 
       <!-- 9. Rollovers Trends Across Sprints -->
       <app-chart-card class="span-12" [index]="9" title="Rollovers Trends Across Sprints"
         [state]="rollover.state" [options]="rollover.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+        [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-card>
 
       <!-- 10. Team wise Actual vs Trailing Velocity (full width, 2x2 horizontal) -->
       <app-chart-panel-grid class="span-12" [index]="10" title="Team wise Actual vs Trailing Velocity"
         [state]="teamVelocity.state" [panels]="teamVelocity.panels" [legend]="teamVelocity.legend"
-        [panelMinWidth]="240" [horizontal]="true" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="240" [horizontal]="true" [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
 
       <!-- 11. Team wise Committed vs Completed in Completion % (full width) -->
       <app-chart-panel-grid class="span-12" [index]="11" title="Team wise Committed vs Completed in Completion %"
         [state]="teamCompletion.state" [panels]="teamCompletion.panels" [legend]="teamCompletion.legend"
-        [panelMinWidth]="260" [horizontal]="true" [viewEnabled]="true" (retry)="loadCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="260" [horizontal]="true" [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
 
       <!-- 12. Team wise Rollovers Trends Across Sprints (full width) -->
       <app-chart-card class="span-12" [index]="12" title="Team wise Rollovers Trends Across Sprints"
         [state]="teamRollover.state" [options]="teamRollover.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+        [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-card>
 
       <!-- 13. Resource Completion Trends -->
       <app-chart-panel-grid class="span-12" [index]="13" title="Resource Completion Trends"
         [state]="resourceCompletion.state" [panels]="resourceCompletion.panels" [legend]="resourceCompletion.legend"
         [panelMinWidth]="280" [horizontal]="true" [viewEnabled]="true"
-        (retry)="loadCharts()">
+        (retry)="loadPerformanceCharts()">
         <div filter class="resource-team-filter" *ngIf="resourceCompletionTeams.length">
           <label for="resource-completion-team">Team</label>
           <select id="resource-completion-team" class="form-select"

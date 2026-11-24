@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, combineLatest, forkJoin, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import {
   ALL_SPRINTS,
@@ -56,21 +56,30 @@ interface ChartVm {
     ChartCardComponent
   ],
   templateUrl: './qa-dashboard.component.html',
-  styleUrl: './qa-dashboard.component.scss'
+  styleUrl: './qa-dashboard.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class QaDashboardComponent implements OnInit {
+export class QaDashboardComponent implements OnInit, OnDestroy {
   private readonly service = inject(QaService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroy$ = new Subject<void>();
+  private readonly cancelKpiLoad$ = new Subject<void>();
+  private readonly cancelChartsLoad$ = new Subject<void>();
+  private readonly selectedProducts$ = new BehaviorSubject<number[]>([]);
+  private readonly selectedKpiSprints$ = new BehaviorSubject<number[]>([]);
+  private readonly selectedPerfSprints$ = new BehaviorSubject<number[]>([]);
 
   readonly products = QA_PRODUCTS;
   readonly maxPerfSprints = MAX_PERFORMANCE_SPRINTS;
 
-  selectedProductId = QA_PRODUCTS[0].id;
+  selectedProductIds: number[] = [QA_PRODUCTS[0].id];
   activeDashboardTab: 'kpi' | 'performance' = 'kpi';
   selectedKpiSprints: number[] = [...DEFAULT_KPI_SPRINTS];
   selectedPerfSprints: number[] = [...ALL_SPRINTS];
 
   kpiState: LoadState = 'loading';
   kpi: QaKpi | null = null;
+  kpiRefreshing = false;
 
   rollover: ChartVm = { state: 'loading', options: null };
   headcountTrend: ChartVm = { state: 'loading', options: null };
@@ -82,45 +91,91 @@ export class QaDashboardComponent implements OnInit {
   storyPointsChartHeight = 300;
 
   ngOnInit(): void {
-    this.loadKpis();
-    this.loadCharts();
+    combineLatest([this.selectedProducts$, this.selectedKpiSprints$]).pipe(
+      debounceTime(150),
+      distinctUntilChanged(([productsA, sprintsA], [productsB, sprintsB]) =>
+        this.sameNumberArray(productsA, productsB) && this.sameNumberArray(sprintsA, sprintsB)
+      ),
+      switchMap(() => of(null).pipe(tap(() => this.loadKpis()))),
+      takeUntil(this.destroy$)
+    ).subscribe();
+
+    combineLatest([this.selectedProducts$, this.selectedPerfSprints$]).pipe(
+      debounceTime(150),
+      distinctUntilChanged(([productsA, sprintsA], [productsB, sprintsB]) =>
+        this.sameNumberArray(productsA, productsB) && this.sameNumberArray(sprintsA, sprintsB)
+      ),
+      switchMap(() => of(null).pipe(tap(() => this.loadCharts()))),
+      takeUntil(this.destroy$)
+    ).subscribe();
+
+    this.selectedProducts$.next([...this.selectedProductIds]);
+    this.selectedKpiSprints$.next([...this.selectedKpiSprints]);
+    this.selectedPerfSprints$.next([...this.selectedPerfSprints]);
   }
 
-  onProductChange(id: number): void {
-    this.selectedProductId = id;
-    this.loadKpis();
-    this.loadCharts();
+  onProductsChange(ids: Array<string | number>): void {
+    const productIds = ids
+      .map(id => Number(id))
+      .filter(id => !Number.isNaN(id) && this.products.some(product => product.id === id));
+    this.selectedProductIds = productIds.length ? productIds : [QA_PRODUCTS[0].id];
+    this.selectedProducts$.next([...this.selectedProductIds]);
   }
 
   onKpiSprintsChange(sprints: number[]): void {
-    this.selectedKpiSprints = sprints;
-    this.loadKpis();
+    this.selectedKpiSprints = [...sprints];
+    this.selectedKpiSprints$.next([...this.selectedKpiSprints]);
   }
 
   onPerfSprintsChange(sprints: number[]): void {
-    this.selectedPerfSprints = sprints;
-    this.loadCharts();
+    this.selectedPerfSprints = [...sprints];
+    this.selectedPerfSprints$.next([...this.selectedPerfSprints]);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.cancelKpiLoad$.next();
+    this.cancelKpiLoad$.complete();
+    this.cancelChartsLoad$.next();
+    this.cancelChartsLoad$.complete();
   }
 
   loadKpis(): void {
+    this.cancelKpiLoad$.next();
     if (this.selectedKpiSprints.length === 0) {
       this.kpi = null;
       this.kpiState = 'empty';
+      this.kpiRefreshing = false;
+      this.cdr.markForCheck();
       return;
     }
-    this.kpiState = 'loading';
-    this.service
-      .getKpis(this.selectedProductId, this.selectedKpiSprints)
-      .pipe(catchError(() => of(null)))
-      .subscribe(res => {
-        if (res === null) { this.kpiState = 'error'; this.kpi = null; return; }
-        this.kpi = res;
-        this.kpiState = 'ready';
-      });
+    this.kpiRefreshing = this.kpiState === 'ready' && this.kpi !== null;
+    if (!this.kpiRefreshing) {
+      this.kpiState = 'loading';
+    }
+    this.fetchBySelectedProducts(productAreaId =>
+      this.service.getKpis(productAreaId, this.selectedKpiSprints)
+    ).pipe(takeUntil(this.cancelKpiLoad$)).subscribe(results => {
+      this.kpiRefreshing = false;
+      if (results === null) { if (this.kpi === null) { this.kpiState = 'error'; } this.cdr.markForCheck(); return; }
+      if (results.length === 0) { if (this.kpi === null) { this.kpiState = 'empty'; } this.cdr.markForCheck(); return; }
+      this.kpi = {
+        capacity: results.reduce((sum, item) => sum + item.capacity, 0),
+        totalStoryPoints: results.reduce((sum, item) => sum + item.totalStoryPoints, 0),
+        rollovers: results.reduce((sum, item) => sum + item.rollovers, 0),
+        rolloverPoints: results.reduce((sum, item) => sum + item.rolloverPoints, 0),
+        observations: results.reduce((sum, item) => sum + item.observations, 0),
+        headcount: results.reduce((sum, item) => sum + item.headcount, 0)
+      };
+      this.kpiState = 'ready';
+      this.cdr.markForCheck();
+    });
+    this.cdr.markForCheck();
   }
 
   loadCharts(): void {
-    const id = this.selectedProductId;
+    this.cancelChartsLoad$.next();
     const sprints = this.selectedPerfSprints;
 
     if (sprints.length === 0) {
@@ -128,94 +183,155 @@ export class QaDashboardComponent implements OnInit {
       this.headcountTrend = { state: 'empty', options: null };
       this.storyPoints = { state: 'empty', options: null };
       this.delivery = { state: 'empty', options: null };
+      this.cdr.markForCheck();
       return;
     }
 
-    this.rollover = { state: 'loading', options: null };
-    this.headcountTrend = { state: 'loading', options: null };
-    this.storyPoints = { state: 'loading', options: null };
-    this.delivery = { state: 'loading', options: null };
+    this.rollover = { state: 'loading', options: this.rollover.options };
+    this.headcountTrend = { state: 'loading', options: this.headcountTrend.options };
+    this.storyPoints = { state: 'loading', options: this.storyPoints.options };
+    this.delivery = { state: 'loading', options: this.delivery.options };
 
     // 1. QA Rollover Trend (line)
-    this.service.getRolloverTrends(id, sprints)
-      .pipe(catchError(() => of(null)))
-      .subscribe(rows => {
-        if (rows === null) { this.rollover = { state: 'error', options: null }; return; }
-        if (rows.length === 0) { this.rollover = { state: 'empty', options: null }; return; }
-        const { categories, data } = lineBySprint(rows, r => r.rolloverPoints);
-        this.rollover = {
-          state: 'ready',
-          options: buildLineChart(
-            categories.map(c => `Sprint ${c}`),
-            [{ name: 'Rollover Points', data }],
-            ['#0ea5b5'], 240, 'Sum of Rollover Points'
-          )
-        };
-      });
+    this.fetchBySelectedProducts(productAreaId =>
+      this.service.getRolloverTrends(productAreaId, sprints)
+    ).pipe(takeUntil(this.cancelChartsLoad$)).subscribe(results => {
+      if (results === null) { this.rollover = { state: 'error', options: null }; this.cdr.markForCheck(); return; }
+      const rows = this.aggregateRows(results.flat(), row => `${row.sprintId}`, ['rolloverPoints']);
+      if (rows.length === 0) { this.rollover = { state: 'empty', options: null }; this.cdr.markForCheck(); return; }
+      const { categories, data } = lineBySprint(rows, r => r.rolloverPoints);
+      this.rollover = {
+        state: 'ready',
+        options: buildLineChart(
+          categories.map(c => `Sprint ${c}`),
+          [{ name: 'Rollover Points', data }],
+          ['#0ea5b5'], 240, 'Sum of Rollover Points'
+        )
+      };
+      this.cdr.markForCheck();
+    });
 
     // 2. Story Points Tested — QA wise (horizontal stacked bars, one segment per sprint)
-    this.service.getStoryPointsTested(id, sprints)
-      .pipe(catchError(() => of(null)))
-      .subscribe(rows => {
-        if (rows === null) {
-          this.storyPoints = { state: 'error', options: null };
-          this.headcountTrend = { state: 'error', options: null };
-          return;
-        }
-        if (rows.length === 0) {
-          this.storyPoints = { state: 'empty', options: null };
-          this.headcountTrend = { state: 'empty', options: null };
-          return;
-        }
-        const { categories, series } = stackBySprint(rows, r => r.employeeName, r => r.deliveredPoints);
-        // Fixed row height per employee keeps the stacked bars a readable
-        // thickness no matter how many employees there are. The chart grows
-        // vertically and the card scrolls (employees only); the value axis
-        // stays pinned to the top so it is never hidden by the scroll.
-        const ROW_HEIGHT = 46;
-        const CHROME = 90; // space for the top axis + legend
-        const chartHeight = categories.length * ROW_HEIGHT + CHROME;
-        this.storyPointsChartHeight = chartHeight;
-        this.storyPointsMinHeight = categories.length > 8 ? chartHeight : 0;
-        this.storyPoints = {
-          state: 'ready',
-          options: buildHorizontalStackedBarChart(
-            categories, series, SERIES_COLORS, chartHeight, '', 'Employee', '65%'
-          )
-        };
+    this.fetchBySelectedProducts(productAreaId =>
+      this.service.getStoryPointsTested(productAreaId, sprints)
+    ).pipe(takeUntil(this.cancelChartsLoad$)).subscribe(results => {
+      if (results === null) {
+        this.storyPoints = { state: 'error', options: null };
+        this.headcountTrend = { state: 'error', options: null };
+        this.cdr.markForCheck();
+        return;
+      }
+      const rows = this.aggregateRows(
+        results.flat(),
+        row => `${row.employeeId}-${row.sprintId}`,
+        ['deliveredPoints']
+      );
+      if (rows.length === 0) {
+        this.storyPoints = { state: 'empty', options: null };
+        this.headcountTrend = { state: 'empty', options: null };
+        this.cdr.markForCheck();
+        return;
+      }
+      const { categories, series } = stackBySprint(rows, r => r.employeeName, r => r.deliveredPoints);
+      // Fixed row height per employee keeps the stacked bars a readable
+      // thickness no matter how many employees there are. The chart grows
+      // vertically and the card scrolls (employees only); the value axis
+      // stays pinned to the top so it is never hidden by the scroll.
+      const ROW_HEIGHT = 46;
+      const CHROME = 90; // space for the top axis + legend
+      const chartHeight = categories.length * ROW_HEIGHT + CHROME;
+      this.storyPointsChartHeight = chartHeight;
+      this.storyPointsMinHeight = categories.length > 8 ? chartHeight : 0;
+      this.storyPoints = {
+        state: 'ready',
+        options: buildHorizontalStackedBarChart(
+          categories, series, SERIES_COLORS, chartHeight, '', 'Employee', '65%'
+        )
+      };
 
-        const headcountBySprint = new Map<number, Set<number>>();
-        for (const row of rows) {
-          const employeeSet = headcountBySprint.get(row.sprintNumber) ?? new Set<number>();
-          employeeSet.add(row.employeeId);
-          headcountBySprint.set(row.sprintNumber, employeeSet);
-        }
-        const sprintNumbers = Array.from(headcountBySprint.keys()).sort((a, b) => a - b);
-        this.headcountTrend = {
-          state: 'ready',
-          options: buildLineChart(
-            sprintNumbers.map(sprintNumber => `Sprint ${sprintNumber}`),
-            [{ name: 'QA Headcount', data: sprintNumbers.map(sprintNumber => headcountBySprint.get(sprintNumber)?.size ?? 0) }],
-            [SERIES_COLORS[0]],
-            280,
-            'Headcount'
-          )
-        };
-      });
+      const headcountBySprint = new Map<number, Set<number>>();
+      for (const row of rows) {
+        const employeeSet = headcountBySprint.get(row.sprintNumber) ?? new Set<number>();
+        employeeSet.add(row.employeeId);
+        headcountBySprint.set(row.sprintNumber, employeeSet);
+      }
+      const sprintNumbers = Array.from(headcountBySprint.keys()).sort((a, b) => a - b);
+      this.headcountTrend = {
+        state: 'ready',
+        options: buildLineChart(
+          sprintNumbers.map(sprintNumber => `Sprint ${sprintNumber}`),
+          [{ name: 'QA Headcount', data: sprintNumbers.map(sprintNumber => headcountBySprint.get(sprintNumber)?.size ?? 0) }],
+          [SERIES_COLORS[0]],
+          280,
+          'Headcount'
+        )
+      };
+      this.cdr.markForCheck();
+    });
 
     // 3. Daily Delivery Trend (one line per selected sprint — no aggregation)
-    this.service.getDeliveryTrend(id, sprints)
-      .pipe(catchError(() => of(null)))
-      .subscribe(rows => {
-        if (rows === null) { this.delivery = { state: 'error', options: null }; return; }
-        if (rows.length === 0) { this.delivery = { state: 'empty', options: null }; return; }
-        const { days, series } = multiSeriesByDay(rows, r => r.delivery);
-        this.delivery = {
-          state: 'ready',
-          options: buildMultiLineChart(
-            days.map(d => `Day ${d}`), series, SERIES_COLORS, 320, 'Delivered Points'
-          )
-        };
-      });
+    this.fetchBySelectedProducts(productAreaId =>
+      this.service.getDeliveryTrend(productAreaId, sprints)
+    ).pipe(takeUntil(this.cancelChartsLoad$)).subscribe(results => {
+      if (results === null) { this.delivery = { state: 'error', options: null }; this.cdr.markForCheck(); return; }
+      const rows = this.aggregateRows(
+        results.flat(),
+        row => `${row.sprintId}-${row.day}`,
+        ['delivery']
+      );
+      if (rows.length === 0) { this.delivery = { state: 'empty', options: null }; this.cdr.markForCheck(); return; }
+      const { days, series } = multiSeriesByDay(rows, r => r.delivery);
+      this.delivery = {
+        state: 'ready',
+        options: buildMultiLineChart(
+          days.map(d => `Day ${d}`), series, SERIES_COLORS, 320, 'Delivered Points'
+        )
+      };
+      this.cdr.markForCheck();
+    });
+    this.cdr.markForCheck();
+  }
+
+  private fetchBySelectedProducts<T>(requestFactory: (productAreaId: number) => Observable<T>): Observable<T[] | null> {
+    if (this.selectedProductIds.length === 0) {
+      return of([]);
+    }
+    return forkJoin(
+      this.selectedProductIds.map(productAreaId =>
+        requestFactory(productAreaId).pipe(catchError(() => of(null as T | null)))
+      )
+    ).pipe(map(results => results.some(result => result === null) ? null : (results as T[])));
+  }
+
+  private aggregateRows<T extends object>(
+    rows: T[],
+    keySelector: (row: T) => string,
+    sumFields: Array<keyof T>
+  ): T[] {
+    const map = new Map<string, T>();
+    for (const row of rows) {
+      const key = keySelector(row);
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, { ...row });
+        continue;
+      }
+
+      for (const field of sumFields) {
+        const existingValue = existing[field];
+        const nextValue = row[field];
+        if (typeof existingValue === 'number' && typeof nextValue === 'number') {
+          existing[field] = (existingValue + nextValue) as T[keyof T];
+        }
+      }
+    }
+    return Array.from(map.values());
+  }
+
+  private sameNumberArray(a: number[], b: number[]): boolean {
+    if (a.length !== b.length) {
+      return false;
+    }
+    return a.every((value, index) => value === b[index]);
   }
 }

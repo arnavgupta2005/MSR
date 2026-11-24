@@ -18,13 +18,6 @@
 .product-bar {
   padding: var(--space-5) var(--space-6);
   margin-bottom: var(--space-6);
-
-  // Compact product dropdown — sized to content, not full width.
-  .form-select {
-    min-width: 220px;
-    max-width: 260px;
-    width: auto;
-  }
 }
 
 .dashboard-tabs {

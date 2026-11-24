@@ -46,11 +46,11 @@ export interface ChartPanel {
       </header>
 
       <div class="panel-card-body">
-        <app-loading-state *ngIf="state === 'loading'" [height]="220"></app-loading-state>
-        <app-error-state *ngIf="state === 'error'" [height]="220" (retry)="retry.emit()"></app-error-state>
-        <app-empty-state *ngIf="state === 'empty'" [height]="220" [message]="emptyMessage"></app-empty-state>
+        <app-loading-state *ngIf="state === 'loading' && !panels.length" [height]="220"></app-loading-state>
+        <app-error-state *ngIf="state === 'error' && !panels.length" [height]="220" (retry)="retry.emit()"></app-error-state>
+        <app-empty-state *ngIf="state === 'empty' && !panels.length" [height]="220" [message]="emptyMessage"></app-empty-state>
 
-        <div class="panel-scroll" *ngIf="state === 'ready'"
+        <div class="panel-scroll" *ngIf="panels.length"
              [class.horizontal]="horizontal"
              [style.--panel-min.px]="panelMinWidth">
           <div class="panel-tile" *ngFor="let p of panels; let i = index" [class.expanded]="expandedPanel === p"
@@ -87,6 +87,10 @@ export interface ChartPanel {
               [colors]="p.options.colors!">
             </apx-chart>
           </div>
+        </div>
+
+        <div class="loading-overlay" *ngIf="state === 'loading' && panels.length">
+          <app-loading-state [height]="220" message="Updating…"></app-loading-state>
         </div>
       </div>
     </div>

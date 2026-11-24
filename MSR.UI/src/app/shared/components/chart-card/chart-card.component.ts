@@ -76,19 +76,19 @@ export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
       </header>
 
       <div class="chart-body">
-        <app-loading-state *ngIf="state === 'loading'" [height]="chartHeight"></app-loading-state>
+        <app-loading-state *ngIf="state === 'loading' && !options" [height]="chartHeight"></app-loading-state>
         <app-error-state
-          *ngIf="state === 'error'"
+          *ngIf="state === 'error' && !options"
           [height]="chartHeight"
           (retry)="retry.emit()"></app-error-state>
         <app-empty-state
-          *ngIf="state === 'empty'"
+          *ngIf="state === 'empty' && !options"
           [height]="chartHeight"
           [message]="emptyMessage"></app-empty-state>
 
         <div class="chart-scroll" [class.scrollable]="scrollMinWidth > 0"
              [class.scrollable-y]="scrollMinHeight > 0"
-             *ngIf="state === 'ready' && options">
+             *ngIf="options">
           <div [style.min-width.px]="scrollMinWidth > 0 ? scrollMinWidth : null"
                [style.height.px]="scrollMinHeight > 0 ? scrollMinHeight : null">
             <apx-chart #chart
@@ -108,6 +108,10 @@ export type ChartState = 'loading' | 'ready' | 'empty' | 'error';
               [labels]="options.labels!">
             </apx-chart>
           </div>
+        </div>
+
+        <div class="loading-overlay" *ngIf="state === 'loading' && options">
+          <app-loading-state [height]="chartHeight" message="Updating…"></app-loading-state>
         </div>
       </div>
     </div>

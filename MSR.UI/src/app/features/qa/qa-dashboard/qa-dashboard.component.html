@@ -91,6 +91,11 @@
       <app-chart-card class="span-12" [index]="4" title="Daily Delivery Trend" subtitle="Delivered Points"
         [state]="delivery.state" [options]="delivery.options" [chartHeight]="320"
         [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
+      <app-chart-card class="span-12" [index]="5" title="Iteration Performance"
+        subtitle="Iteration 0, Iteration 1, Iteration 2 and Others (%)"
+        [state]="iterationPerformance.state" [options]="iterationPerformance.options" [chartHeight]="320"
+        [scrollMinWidth]="iterationPerformanceMinWidth"
+        [viewEnabled]="true" (retry)="loadCharts()"></app-chart-card>
     </div>
   </app-dashboard-section>
 </div>

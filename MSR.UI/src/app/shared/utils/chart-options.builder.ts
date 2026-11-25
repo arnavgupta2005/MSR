@@ -189,6 +189,70 @@ export function buildColumnChart(
   };
 }
 
+/** Grouped percentage bar chart across sprints with single-bar tooltip. */
+export function buildGroupedPercentageBarChart(
+  categories: (string | number)[],
+  series: { name: string; data: (number | null)[] }[],
+  colors: string[],
+  height = 320,
+  yAxisTitle = 'Percentage'
+): ChartOptions {
+  return {
+    series,
+    chart: baseChart(height, 'bar'),
+    colors,
+    plotOptions: {
+      bar: { horizontal: false, columnWidth: '76%', borderRadius: 3, borderRadiusApplication: 'end' }
+    },
+    dataLabels: { enabled: false },
+    stroke: { show: true, width: 1, colors: ['transparent'] },
+    xaxis: {
+      categories,
+      ...baseAxisStyle,
+      labels: {
+        style: { colors: AXIS_LABEL_COLOR, fontSize: '11px', fontFamily: 'Inter, sans-serif' },
+        hideOverlappingLabels: false,
+        rotate: -35,
+        trim: false
+      },
+      axisBorder: { color: GRID_COLOR },
+      axisTicks: { color: GRID_COLOR }
+    },
+    yaxis: {
+      min: 0,
+      max: 100,
+      tickAmount: 5,
+      title: { text: yAxisTitle, style: { color: AXIS_LABEL_COLOR, fontSize: '11px', fontWeight: 600, fontFamily: 'Inter, sans-serif' } },
+      labels: {
+        formatter: (value: number) => `${Math.round(value)}%`,
+        style: { colors: AXIS_LABEL_COLOR, fontSize: '11px', fontFamily: 'Inter, sans-serif' }
+      }
+    } as any,
+    grid: baseGrid,
+    legend: { ...baseLegend, show: true },
+    tooltip: {
+      ...baseTooltip,
+      shared: false,
+      intersect: true,
+      followCursor: true,
+      custom: ({ series: values, seriesIndex, dataPointIndex, w }: any) => {
+        const sprint = escapeHtml(String(w.globals.labels?.[dataPointIndex] ?? ''));
+        const category = escapeHtml(String(w.globals.seriesNames?.[seriesIndex] ?? ''));
+        const value = values?.[seriesIndex]?.[dataPointIndex] ?? 0;
+        const color = w.globals.colors?.[seriesIndex] ?? '#64748b';
+        return `<div class="pbi-tooltip">
+            <div class="pbi-sprint">${sprint}</div>
+            <div class="pbi-row">
+              <span class="pbi-dot" style="background:${color}"></span>
+              <span class="pbi-name">${category}</span>
+              <span class="pbi-val">${value}%</span>
+            </div>
+          </div>`;
+      }
+    }
+  };
+}
+
 /** Percentage columns for one employee's completion trend across sprints. */
 export function buildCompletionTrendBarChart(
   categories: (string | number)[],

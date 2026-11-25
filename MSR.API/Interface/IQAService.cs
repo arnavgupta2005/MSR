@@ -15,5 +15,8 @@ namespace MSR.API.Services
 
         Task<List<QADeliveryTrendDto>> GetDeliveryTrendAsync(
             QAPerformanceFilterDto filter);
+
+        Task<List<QAIterationPerformanceDto>> GetIterationPerformanceAsync(
+            QAPerformanceFilterDto filter);
     }
 }

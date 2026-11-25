@@ -18,6 +18,7 @@ public class MSRDbContext : DbContext
     public DbSet<FeatureRelease> FeatureReleases { get; set; }
     public DbSet<QAPerformance> QAPerformances { get; set; }
     public DbSet<QADailyDelivery> QADailyDeliveries { get; set; }
+    public DbSet<Iteration> Iterations { get; set; }
     public DbSet<ServiceNowTicket> ServiceNowTickets { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -30,7 +31,20 @@ public class MSRDbContext : DbContext
         modelBuilder.Entity<FeatureRelease>().ToTable("FeatureRelease");
         modelBuilder.Entity<QAPerformance>().ToTable("QAPerformance");
         modelBuilder.Entity<QADailyDelivery>().ToTable("QADailyDelivery");
+        modelBuilder.Entity<Iteration>().ToTable("Iteration");
         modelBuilder.Entity<ServiceNowTicket>().ToTable("ServiceNowTickets");
+
+        modelBuilder.Entity<Iteration>()
+            .HasOne(i => i.Sprint)
+            .WithMany(s => s.Iterations)
+            .HasForeignKey(i => i.SprintId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Iteration>()
+            .HasOne(i => i.ProductArea)
+            .WithMany(p => p.Iterations)
+            .HasForeignKey(i => i.ProductAreaId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
 

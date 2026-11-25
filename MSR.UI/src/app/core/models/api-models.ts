@@ -147,6 +147,15 @@ export interface QaDeliveryTrend {
   delivery: number;
 }
 
+export interface QaIterationPerformance {
+  sprintId: number;
+  sprintNumber: number;
+  iteration0: number;
+  iteration1: number;
+  iteration2: number;
+  others: number;
+}
+
 // ---- Feature Release ----
 
 export interface FeatureRelease {

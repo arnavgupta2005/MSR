@@ -2,7 +2,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { QaDeliveryTrend, QaKpi, QaRolloverTrend, QaStoryPointsTested } from '../models/api-models';
+import {
+  QaDeliveryTrend,
+  QaIterationPerformance,
+  QaKpi,
+  QaRolloverTrend,
+  QaStoryPointsTested
+} from '../models/api-models';
 
 @Injectable({ providedIn: 'root' })
 export class QaService {
@@ -40,6 +46,15 @@ export class QaService {
 
   getDeliveryTrend(productAreaId: number, sprints: number[]): Observable<QaDeliveryTrend[]> {
     return this.http.get<QaDeliveryTrend[]>(`${this.baseUrl}/delivery-trend`, {
+      params: this.sprintParams(productAreaId, sprints)
+    });
+  }
+
+  getIterationPerformance(
+    productAreaId: number,
+    sprints: number[]
+  ): Observable<QaIterationPerformance[]> {
+    return this.http.get<QaIterationPerformance[]>(`${this.baseUrl}/iteration-performance`, {
       params: this.sprintParams(productAreaId, sprints)
     });
   }

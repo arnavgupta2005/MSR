@@ -12,6 +12,7 @@ public class AdminImportController : ControllerBase
     private readonly ISprintPerformanceImportService _sprintImport;
     private readonly IQAPerformanceImportService _qaPerformanceImport;
     private readonly IQADailyDeliveryImportService _qaDailyDeliveryImport;
+    private readonly IIterationImportService _iterationImport;
     private readonly IFeatureReleaseImportService _featureReleaseImport;
     private readonly IServiceNowTicketImportService _serviceNowTicketImport;
 
@@ -22,12 +23,14 @@ public class AdminImportController : ControllerBase
         ISprintPerformanceImportService sprintImport,
         IQAPerformanceImportService qaPerformanceImport,
         IQADailyDeliveryImportService qaDailyDeliveryImport,
+        IIterationImportService iterationImport,
         IFeatureReleaseImportService featureReleaseImport,
         IServiceNowTicketImportService serviceNowTicketImport)
     {
         _sprintImport = sprintImport;
         _qaPerformanceImport = qaPerformanceImport;
         _qaDailyDeliveryImport = qaDailyDeliveryImport;
+        _iterationImport = iterationImport;
         _featureReleaseImport = featureReleaseImport;
         _serviceNowTicketImport = serviceNowTicketImport;
     }
@@ -102,6 +105,18 @@ public class AdminImportController : ControllerBase
     [RequestSizeLimit(MaxFileSizeBytes)]
     public Task<IActionResult> ImportQADailyDelivery(IFormFile? file)
         => RunImport(file, _qaDailyDeliveryImport.ImportAsync);
+
+    // ---- Iteration ----
+
+    [HttpPost("iteration/validate")]
+    [RequestSizeLimit(MaxFileSizeBytes)]
+    public Task<IActionResult> ValidateIteration(IFormFile? file)
+        => RunValidate(file, "Iteration", _iterationImport.ValidateAsync);
+
+    [HttpPost("iteration")]
+    [RequestSizeLimit(MaxFileSizeBytes)]
+    public Task<IActionResult> ImportIteration(IFormFile? file)
+        => RunImport(file, _iterationImport.ImportAsync);
 
     // ---- Feature Release ----
 
@@ -215,6 +230,12 @@ public class AdminImportController : ControllerBase
         "Sprint", "Web/Mobile", "Days", "Delivery", "Product"
     };
 
+    // Iteration columns expected by the Iteration template (in order).
+    private static readonly string[] IterationTemplateHeaders =
+    {
+        "Sprint", "Iteration 0", "Iteration 1", "Iteration 2", "Others", "Product"
+    };
+
     // ServiceNow Tickets columns expected by the importer (6 columns, in order).
     private static readonly string[] ServiceNowTicketTemplateHeaders =
     {
@@ -241,6 +262,10 @@ public class AdminImportController : ControllerBase
     public IActionResult DownloadQADailyDeliveryInfoQuestTemplate()
         => BuildTemplate(QADailyDeliveryInfoQuestTemplateHeaders, "InfoQuest QA", "InfoQuest_QA_Daily_Delivery_Template.xlsx");
 
+    [HttpGet("iteration/template")]
+    public IActionResult DownloadIterationTemplate()
+        => BuildIterationTemplate();
+
     [HttpGet("service-now-ticket/template")]
     public IActionResult DownloadServiceNowTicketTemplate()
         => BuildTemplate(ServiceNowTicketTemplateHeaders, "ServiceNow Tickets", "ServiceNow_Tickets_Template.xlsx");
@@ -266,6 +291,31 @@ public class AdminImportController : ControllerBase
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         {
             FileDownloadName = fileName
+        };
+    }
+
+    // Build Iteration template with percentage formatting on iteration columns.
+    private static FileContentResult BuildIterationTemplate()
+    {
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add("Iteration");
+
+        for (var i = 0; i < IterationTemplateHeaders.Length; i++)
+        {
+            sheet.Cell(1, i + 1).Value = IterationTemplateHeaders[i];
+        }
+
+        sheet.Row(1).Style.Font.Bold = true;
+        sheet.Columns(2, 5).Style.NumberFormat.Format = "0%";
+
+        using var memory = new MemoryStream();
+        workbook.SaveAs(memory);
+
+        return new FileContentResult(
+            memory.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        {
+            FileDownloadName = "Iteration-msr.xlsx"
         };
     }
 

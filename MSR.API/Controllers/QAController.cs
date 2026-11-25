@@ -66,5 +66,18 @@ namespace MSR.API.Controllers
 
             return Ok(result);
         }
+
+        // ========================================
+        // ITERATION PERFORMANCE
+        // ========================================
+
+        [HttpGet("iteration-performance")]
+        public async Task<ActionResult<List<QAIterationPerformanceDto>>> GetIterationPerformance(
+            [FromQuery] QAPerformanceFilterDto filter)
+        {
+            var result = await _qaService.GetIterationPerformanceAsync(filter);
+
+            return Ok(result);
+        }
     }
 }

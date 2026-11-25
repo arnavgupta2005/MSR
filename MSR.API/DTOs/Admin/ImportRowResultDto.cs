@@ -24,6 +24,10 @@ namespace MSR.API.DTOs.Admin
         // QA import identity fields (only populated for the relevant import type).
         public string? Day { get; set; }
         public string? Delivery { get; set; }
+        public string? Iteration0 { get; set; }
+        public string? Iteration1 { get; set; }
+        public string? Iteration2 { get; set; }
+        public string? Others { get; set; }
         public string? WorkItemId { get; set; }
         public string? WorkItemType { get; set; }
 

@@ -17,6 +17,7 @@ type ImportKey =
   | 'sprint-performance'
   | 'qa-performance'
   | 'qa-daily-delivery'
+  | 'iteration'
   | 'feature-release'
   | 'service-now-ticket';
 
@@ -91,6 +92,21 @@ export class AdminImportComponent {
       ...AdminImportComponent.initialState()
     },
     {
+      key: 'iteration',
+      title: 'Iteration',
+      description:
+        'Upload iteration data. Enter percentages as 81, 81%, or 0.81 (stored as 81).',
+      columns: [
+        { label: 'Sprint', field: 'sprint' },
+        { label: 'Iteration 0', field: 'iteration0' },
+        { label: 'Iteration 1', field: 'iteration1' },
+        { label: 'Iteration 2', field: 'iteration2' },
+        { label: 'Others', field: 'others' },
+        { label: 'Product', field: 'product' }
+      ],
+      ...AdminImportComponent.initialState()
+    },
+    {
       key: 'feature-release',
       title: 'Feature Release',
       description:
@@ -124,6 +140,7 @@ export class AdminImportComponent {
   private static readonly templateKeys: ReadonlySet<ImportKey> = new Set<ImportKey>([
     'sprint-performance',
     'qa-performance',
+    'iteration',
     'feature-release',
     'service-now-ticket'
   ]);
@@ -145,6 +162,7 @@ export class AdminImportComponent {
     const templateNames: Record<string, string> = {
       'sprint-performance': 'Sprint_Performance_Template.xlsx',
       'qa-performance': 'QA_Performance_Template.xlsx',
+      iteration: 'Iteration-msr.xlsx',
       'feature-release': 'Feature_Release_Template.xlsx',
       'service-now-ticket': 'ServiceNow_Tickets_Template.xlsx'
     };

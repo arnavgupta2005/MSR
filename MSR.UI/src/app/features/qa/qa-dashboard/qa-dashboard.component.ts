@@ -26,6 +26,7 @@ import {
   ChartState
 } from '../../../shared/components/chart-card/chart-card.component';
 import {
+  buildGroupedPercentageBarChart,
   buildHorizontalStackedBarChart,
   buildLineChart,
   buildMultiLineChart,
@@ -85,13 +86,14 @@ export class QaDashboardComponent implements OnInit, OnDestroy {
   headcountTrend: ChartVm = { state: 'loading', options: null };
   storyPoints: ChartVm = { state: 'loading', options: null };
   delivery: ChartVm = { state: 'loading', options: null };
-
   get selectedProductNames(): string {
     return this.products
       .filter(product => this.selectedProductIds.includes(product.id))
       .map(product => product.name)
       .join(', ');
   }
+  iterationPerformance: ChartVm = { state: 'loading', options: null };
+  iterationPerformanceMinWidth = 0;
   /** Internal-scroll min height for the story-points stacked bars (0 = no scroll). */
   storyPointsMinHeight = 0;
   /** Natural (unscrolled) height of the story-points stacked bars. */
@@ -190,6 +192,8 @@ export class QaDashboardComponent implements OnInit, OnDestroy {
       this.headcountTrend = { state: 'empty', options: null };
       this.storyPoints = { state: 'empty', options: null };
       this.delivery = { state: 'empty', options: null };
+      this.iterationPerformance = { state: 'empty', options: null };
+      this.iterationPerformanceMinWidth = 0;
       this.cdr.markForCheck();
       return;
     }
@@ -198,6 +202,7 @@ export class QaDashboardComponent implements OnInit, OnDestroy {
     this.headcountTrend = { state: 'loading', options: this.headcountTrend.options };
     this.storyPoints = { state: 'loading', options: this.storyPoints.options };
     this.delivery = { state: 'loading', options: this.delivery.options };
+    this.iterationPerformance = { state: 'loading', options: this.iterationPerformance.options };
 
     // 1. QA Rollover Trend (line)
     this.fetchBySelectedProducts(productAreaId =>
@@ -292,6 +297,50 @@ export class QaDashboardComponent implements OnInit, OnDestroy {
         state: 'ready',
         options: buildMultiLineChart(
           days.map(d => `Day ${d}`), series, SERIES_COLORS, 320, 'Delivered Points'
+        )
+      };
+      this.cdr.markForCheck();
+    });
+
+    // 4. Iteration Performance (grouped bars per sprint)
+    this.fetchBySelectedProducts(productAreaId =>
+      this.service.getIterationPerformance(productAreaId, sprints)
+    ).pipe(takeUntil(this.cancelChartsLoad$)).subscribe(results => {
+      if (results === null) {
+        this.iterationPerformance = { state: 'error', options: null };
+        this.iterationPerformanceMinWidth = 0;
+        this.cdr.markForCheck();
+        return;
+      }
+
+      const rows = this.aggregateRows(
+        results.flat(),
+        row => `${row.sprintId}`,
+        ['iteration0', 'iteration1', 'iteration2', 'others']
+      ).sort((a, b) => a.sprintNumber - b.sprintNumber);
+
+      if (rows.length === 0) {
+        this.iterationPerformance = { state: 'empty', options: null };
+        this.iterationPerformanceMinWidth = 0;
+        this.cdr.markForCheck();
+        return;
+      }
+
+      const categories = rows.map(row => `Sprint ${row.sprintNumber}`);
+      this.iterationPerformanceMinWidth = Math.max(0, categories.length * 84);
+      this.iterationPerformance = {
+        state: 'ready',
+        options: buildGroupedPercentageBarChart(
+          categories,
+          [
+            { name: 'Iteration 0', data: rows.map(row => row.iteration0) },
+            { name: 'Iteration 1', data: rows.map(row => row.iteration1) },
+            { name: 'Iteration 2', data: rows.map(row => row.iteration2) },
+            { name: 'Others', data: rows.map(row => row.others) }
+          ],
+          [SERIES_COLORS[0], SERIES_COLORS[1], SERIES_COLORS[2], SERIES_COLORS[3]],
+          320,
+          'Percentage'
         )
       };
       this.cdr.markForCheck();

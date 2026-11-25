@@ -13,6 +13,10 @@ export interface ImportRowResult {
   product: string | null;
   day: string | null;
   delivery: string | null;
+  iteration0: string | null;
+  iteration1: string | null;
+  iteration2: string | null;
+  others: string | null;
   workItemId: string | null;
   workItemType: string | null;
   featureDescription: string | null;

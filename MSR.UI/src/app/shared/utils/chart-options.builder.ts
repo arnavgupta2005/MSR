@@ -44,6 +44,20 @@ function yTitle(text: string): ApexYAxisWithTitle {
 
 type ApexYAxisWithTitle = any;
 
+export interface DipTooltipEntry {
+  product: string;
+  value: string;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /**
  * Power BI-style custom tooltip. Renders a bold header (optional group name +
  * Sprint) followed by each series with its colour dot, business name and value.
@@ -53,8 +67,9 @@ export function powerBiTooltip(options: {
   percentSeries?: string[];      // series names rendered with a % suffix
   fixed?: boolean;               // pin the tooltip so it can't be clipped by scroll containers
   compact?: boolean;             // render a smaller, denser tooltip
+  dipBySprint?: Record<string, DipTooltipEntry[]>;
 } = {}): any {
-  const { headerGroup, percentSeries = [], fixed = false, compact = false } = options;
+  const { headerGroup, percentSeries = [], fixed = false, compact = false, dipBySprint } = options;
   const wrapClass = compact ? 'pbi-tooltip pbi-compact' : 'pbi-tooltip';
   return {
     ...baseTooltip,
@@ -65,7 +80,8 @@ export function powerBiTooltip(options: {
       ? { enabled: true, position: 'topLeft', offsetX: 0, offsetY: 0 }
       : { enabled: false },
     custom: ({ series, dataPointIndex, w }: any) => {
-      const sprint = w.globals.labels?.[dataPointIndex] ?? '';
+      const sprintRaw = String(w.globals.labels?.[dataPointIndex] ?? '');
+      const sprint = escapeHtml(sprintRaw);
       const rows = w.globals.seriesNames
         .map((name: string, i: number) => {
           const val = series[i]?.[dataPointIndex];
@@ -75,15 +91,48 @@ export function powerBiTooltip(options: {
           return `
             <div class="pbi-row">
               <span class="pbi-dot" style="background:${color}"></span>
-              <span class="pbi-name">${name}</span>
+              <span class="pbi-name">${escapeHtml(name)}</span>
               <span class="pbi-val">${val}${suffix}</span>
             </div>`;
         })
         .join('');
       const header = headerGroup
-        ? `<div class="pbi-group">${headerGroup}</div><div class="pbi-sprint">${sprint}</div>`
+        ? `<div class="pbi-group">${escapeHtml(headerGroup)}</div><div class="pbi-sprint">${sprint}</div>`
         : `<div class="pbi-sprint">${sprint}</div>`;
-      return `<div class="${wrapClass}">${header}${rows}</div>`;
+      const sprintNumberMatch = sprintRaw.match(/\d+/);
+      const sprintKey = sprintNumberMatch ? `Sprint ${sprintNumberMatch[0]}` : sprintRaw;
+      const dipEntries = (dipBySprint?.[sprintRaw] ?? dipBySprint?.[sprintKey] ?? [])
+        .filter(entry => entry.value.trim().length > 0);
+
+      if (dipEntries.length === 0) {
+        return `<div class="${wrapClass}">${header}${rows}</div>`;
+      }
+
+      const toggleId = `dip-${w.globals.chartID}-${dataPointIndex}`.replace(/[^a-zA-Z0-9-_]/g, '');
+      const expandId = `${toggleId}-expand`;
+      const dipRows = dipEntries
+        .map(entry => `
+          <div class="pbi-dip-entry">
+            <span class="pbi-dip-product">${escapeHtml(entry.product)}:</span>
+            <span class="pbi-dip-value">${escapeHtml(entry.value)}</span>
+          </div>`)
+        .join('');
+
+      const dipSection = `
+        <div class="pbi-dip">
+          <input id="${toggleId}" class="pbi-dip-toggle" type="checkbox">
+          <label for="${toggleId}" class="pbi-dip-icon" title="View DIP reason" aria-label="View DIP reason">ⓘ</label>
+          <div class="pbi-dip-popover">
+            <div class="pbi-dip-title-row">
+              <span class="pbi-dip-title">DIP</span>
+              <input id="${expandId}" class="pbi-dip-expand-toggle" type="checkbox">
+              <label for="${expandId}" class="pbi-dip-expand" title="Expand/collapse DIP text" aria-label="Expand or collapse DIP text"></label>
+            </div>
+            <div class="pbi-dip-content">${dipRows}</div>
+          </div>
+        </div>`;
+
+      return `<div class="${wrapClass}">${header}${rows}${dipSection}</div>`;
     }
   };
 }
@@ -96,7 +145,8 @@ export function buildLineChart(
   colors: string[],
   height = 240,
   yAxisTitle = '',
-  productName?: string
+  productName?: string,
+  dipBySprint?: Record<string, DipTooltipEntry[]>
 ): ChartOptions {
   return {
     series,
@@ -109,8 +159,8 @@ export function buildLineChart(
     yaxis: yAxisTitle ? yTitle(yAxisTitle) : { ...baseAxisStyle },
     grid: baseGrid,
     legend: { ...baseLegend, show: series.length > 1 },
-    tooltip: productName 
-      ? powerBiTooltip({ headerGroup: productName })
+    tooltip: productName || dipBySprint
+      ? powerBiTooltip({ headerGroup: productName, dipBySprint })
       : baseTooltip
   };
 }
@@ -136,6 +186,70 @@ export function buildColumnChart(
     grid: baseGrid,
     legend: baseLegend,
     tooltip: baseTooltip
+  };
+}
+
+/** Grouped percentage bar chart across sprints with single-bar tooltip. */
+export function buildGroupedPercentageBarChart(
+  categories: (string | number)[],
+  series: { name: string; data: (number | null)[] }[],
+  colors: string[],
+  height = 320,
+  yAxisTitle = 'Percentage'
+): ChartOptions {
+  return {
+    series,
+    chart: baseChart(height, 'bar'),
+    colors,
+    plotOptions: {
+      bar: { horizontal: false, columnWidth: '76%', borderRadius: 3, borderRadiusApplication: 'end' }
+    },
+    dataLabels: { enabled: false },
+    stroke: { show: true, width: 1, colors: ['transparent'] },
+    xaxis: {
+      categories,
+      ...baseAxisStyle,
+      labels: {
+        style: { colors: AXIS_LABEL_COLOR, fontSize: '11px', fontFamily: 'Inter, sans-serif' },
+        hideOverlappingLabels: false,
+        rotate: -35,
+        trim: false
+      },
+      axisBorder: { color: GRID_COLOR },
+      axisTicks: { color: GRID_COLOR }
+    },
+    yaxis: {
+      min: 0,
+      max: 100,
+      tickAmount: 5,
+      title: { text: yAxisTitle, style: { color: AXIS_LABEL_COLOR, fontSize: '11px', fontWeight: 600, fontFamily: 'Inter, sans-serif' } },
+      labels: {
+        formatter: (value: number) => `${Math.round(value)}%`,
+        style: { colors: AXIS_LABEL_COLOR, fontSize: '11px', fontFamily: 'Inter, sans-serif' }
+      }
+    } as any,
+    grid: baseGrid,
+    legend: { ...baseLegend, show: true },
+    tooltip: {
+      ...baseTooltip,
+      shared: false,
+      intersect: true,
+      followCursor: true,
+      custom: ({ series: values, seriesIndex, dataPointIndex, w }: any) => {
+        const sprint = escapeHtml(String(w.globals.labels?.[dataPointIndex] ?? ''));
+        const category = escapeHtml(String(w.globals.seriesNames?.[seriesIndex] ?? ''));
+        const value = values?.[seriesIndex]?.[dataPointIndex] ?? 0;
+        const color = w.globals.colors?.[seriesIndex] ?? '#64748b';
+        return `<div class="pbi-tooltip">
+            <div class="pbi-sprint">${sprint}</div>
+            <div class="pbi-row">
+              <span class="pbi-dot" style="background:${color}"></span>
+              <span class="pbi-name">${category}</span>
+              <span class="pbi-val">${value}%</span>
+            </div>
+          </div>`;
+      }
+    }
   };
 }
 

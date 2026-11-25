@@ -17,5 +17,8 @@ namespace MSR.API.Models
 
         public ICollection<QADailyDelivery> QADailyDeliveries { get; set; }
             = new List<QADailyDelivery>();
+
+        public ICollection<Iteration> Iterations { get; set; }
+            = new List<Iteration>();
     }
 }

@@ -46,6 +46,7 @@ import {
   buildLineChart,
   buildMultiLineChart,
   buildPanelLineChart,
+  DipTooltipEntry,
   SERIES_COLORS
 } from '../../../shared/utils/chart-options.builder';
 import {
@@ -71,6 +72,11 @@ interface DevelopmentDashboardProduct {
   id: string;
   name: string;
   productAreaIds: number[];
+}
+
+interface SprintDipRow {
+  sprintNumber: number;
+  productAreaId: number;
 }
 
 @Component({
@@ -318,8 +324,9 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
         return;
       }
 
+      const flatRows = results.flat();
       const aggregatedRows = this.aggregateRows(
-        results.flat(),
+        flatRows,
         row => `${row.sprintId}`,
         ['velocity', 'assignedPoints', 'deliveredPoints', 'plannedItems', 'deliveredItems', 'rollovers', 'rolloverPoints']
       );
@@ -334,6 +341,18 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
 
       const sorted = [...aggregatedRows].sort((a, b) => a.sprintNumber - b.sprintNumber);
       const categories = sorted.map(row => `Sprint ${row.sprintNumber}`);
+      const dip3BySprint = this.buildDipBySprint(
+        flatRows,
+        row => row.dip3Rollovers
+      );
+      const dip4BySprint = this.buildDipBySprint(
+        flatRows,
+        row => row.dip4PlannedItemsDeliveredItems
+      );
+      const dip5BySprint = this.buildDipBySprint(
+        flatRows,
+        row => row.dip5AssignedDeliveredPointsVelocity
+      );
 
       this.plannedDeliveredItemsTrend = {
         state: 'ready',
@@ -346,7 +365,8 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
           [SERIES_COLORS[2], SERIES_COLORS[0]],
           260,
           'Items',
-          this.selectedProductNames
+          this.selectedProductNames,
+          dip4BySprint
         )
       };
 
@@ -361,7 +381,8 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
           [SERIES_COLORS[3], SERIES_COLORS[1]],
           260,
           'Count / Points',
-          this.selectedProductNames
+          this.selectedProductNames,
+          dip3BySprint
         )
       };
 
@@ -377,7 +398,8 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
           [SERIES_COLORS[4], SERIES_COLORS[1], SERIES_COLORS[0]],
           260,
           'Points',
-          this.selectedProductNames
+          this.selectedProductNames,
+          dip5BySprint
         )
       };
       this.cdr.markForCheck();
@@ -392,8 +414,9 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
         return;
       }
 
+      const flatRows = results.flat();
       const aggregatedRows = this.aggregateRows(
-        results.flat(),
+        flatRows,
         row => `${row.sprintId}`,
         ['headcount']
       );
@@ -403,6 +426,10 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
         return;
       }
       const sorted = [...aggregatedRows].sort((a, b) => a.sprintNumber - b.sprintNumber);
+      const dip1BySprint = this.buildDipBySprint(
+        flatRows,
+        row => row.dip1Headcount
+      );
       this.headcountTrend = {
         state: 'ready',
         options: buildLineChart(
@@ -411,7 +438,8 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
           [SERIES_COLORS[1]],
           260,
           'Headcount',
-          this.selectedProductNames
+          this.selectedProductNames,
+          dip1BySprint
         )
       };
       this.cdr.markForCheck();
@@ -426,8 +454,9 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
         return;
       }
 
+      const flatRows = results.flat();
       const aggregatedRows = this.aggregateRows(
-        results.flat(),
+        flatRows,
         row => `${row.sprintId}`,
         ['assignedPoints', 'deliveredPoints']
       );
@@ -437,6 +466,10 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
         return;
       }
       const sorted = [...aggregatedRows].sort((a, b) => a.sprintNumber - b.sprintNumber);
+      const dip2BySprint = this.buildDipBySprint(
+        flatRows,
+        row => row.dip2Completion
+      );
       this.completionTrend = {
         state: 'ready',
         options: buildLineChart(
@@ -450,7 +483,8 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
           [SERIES_COLORS[4]],
           260,
           'Completion %',
-          this.selectedProductNames
+          this.selectedProductNames,
+          dip2BySprint
         )
       };
       this.cdr.markForCheck();
@@ -830,6 +864,57 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
       return null;
     }
     return Math.round((deliveredPoints / assignedPoints) * 1000) / 10;
+  }
+
+  private buildDipBySprint<T extends SprintDipRow>(
+    rows: T[],
+    dipSelector: (row: T) => string | null | undefined
+  ): Record<string, DipTooltipEntry[]> {
+    const bySprint = new Map<number, Map<number, string>>();
+
+    for (const row of rows) {
+      const dip = dipSelector(row);
+      if (!dip || dip.trim().length === 0) {
+        continue;
+      }
+
+      if (!bySprint.has(row.sprintNumber)) {
+        bySprint.set(row.sprintNumber, new Map<number, string>());
+      }
+
+      const byProduct = bySprint.get(row.sprintNumber)!;
+      if (!byProduct.has(row.productAreaId)) {
+        byProduct.set(row.productAreaId, dip);
+      }
+    }
+
+    const result: Record<string, DipTooltipEntry[]> = {};
+    for (const [sprintNumber, byProduct] of bySprint.entries()) {
+      const key = `Sprint ${sprintNumber}`;
+      result[key] = Array.from(byProduct.entries())
+        .map(([productAreaId, value]) => ({
+          product: this.productAreaLabel(productAreaId),
+          value
+        }))
+        .sort((a, b) => a.product.localeCompare(b.product));
+    }
+
+    return result;
+  }
+
+  private productAreaLabel(productAreaId: number): string {
+    switch (productAreaId) {
+      case 1:
+        return 'Intrics';
+      case 2:
+        return 'InfoQuest Web';
+      case 3:
+        return 'InfoQuest Mobile';
+      case 4:
+        return 'InfoQuest LMS';
+      default:
+        return `Product ${productAreaId}`;
+    }
   }
 
   private setKpiChartsLoading(): void {

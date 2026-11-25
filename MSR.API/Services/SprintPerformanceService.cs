@@ -121,13 +121,17 @@ namespace MSR.API.Services
                 {
                     SprintId = g.Key.SprintId,
                     SprintNumber = g.Key.SprintNumber,
+                    ProductAreaId = filter.ProductAreaId,
                     Velocity = g.Sum(x => x.ActualVelocity ?? 0),
                     AssignedPoints = g.Sum(x => x.AssignedPoints ?? 0),
                     DeliveredPoints = g.Sum(x => x.DeliveredPoints ?? 0),
                     PlannedItems = g.Sum(x => x.PlannedItems ?? 0),
                     DeliveredItems = g.Sum(x => x.DeliveredItems ?? 0),
                     Rollovers = g.Sum(x => x.Rollover ?? 0),
-                    RolloverPoints = g.Sum(x => x.RolloverPoints ?? 0)
+                    RolloverPoints = g.Sum(x => x.RolloverPoints ?? 0),
+                    Dip3Rollovers = g.Min(x => x.Dip3Rollovers),
+                    Dip4PlannedItemsDeliveredItems = g.Min(x => x.Dip4PlannedItemsDeliveredItems),
+                    Dip5AssignedDeliveredPointsVelocity = g.Min(x => x.Dip5AssignedDeliveredPointsVelocity)
                 })
                 .OrderBy(x => x.SprintNumber)
                 .ToListAsync();
@@ -197,8 +201,10 @@ namespace MSR.API.Services
                     TeamName = g.Key.TeamName,
                     SprintId = g.Key.SprintId,
                     SprintNumber = g.Key.SprintNumber,
+                    ProductAreaId = filter.ProductAreaId,
                     ActualVelocity = g.Sum(x => x.ActualVelocity ?? 0),
-                    Headcount = g.Select(x => x.EmployeeId).Distinct().Count()
+                    Headcount = g.Select(x => x.EmployeeId).Distinct().Count(),
+                    Dip1Headcount = g.Min(x => x.Dip1Headcount)
                 })
                 .OrderBy(x => x.SprintNumber)
                 .ThenBy(x => x.TeamName)
@@ -342,7 +348,8 @@ namespace MSR.API.Services
                     g.Key.SprintId,
                     g.Key.SprintNumber,
                     AssignedPoints = g.Sum(x => x.AssignedPoints ?? 0),
-                    DeliveredPoints = g.Sum(x => x.DeliveredPoints ?? 0)
+                    DeliveredPoints = g.Sum(x => x.DeliveredPoints ?? 0),
+                    Dip2Completion = g.Min(x => x.Dip2Completion)
                 })
                 .OrderBy(x => x.SprintNumber)
                 .ThenBy(x => x.TeamName)
@@ -354,8 +361,10 @@ namespace MSR.API.Services
                 TeamName = x.TeamName,
                 SprintId = x.SprintId,
                 SprintNumber = x.SprintNumber,
+                ProductAreaId = filter.ProductAreaId,
                 AssignedPoints = x.AssignedPoints,
                 DeliveredPoints = x.DeliveredPoints,
+                Dip2Completion = x.Dip2Completion,
                 CompletionPercentage = x.AssignedPoints == 0
     ? 0
     : Math.Round(

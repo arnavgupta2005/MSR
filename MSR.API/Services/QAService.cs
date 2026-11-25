@@ -126,5 +126,34 @@ namespace MSR.API.Services
                 .ThenBy(x => x.Day)
                 .ToListAsync();
         }
+
+        // ========================================
+        // ITERATION PERFORMANCE
+        // ========================================
+
+        public async Task<List<QAIterationPerformanceDto>> GetIterationPerformanceAsync(
+            QAPerformanceFilterDto filter)
+        {
+            return await _context.Iterations
+                .Where(i =>
+                    i.ProductAreaId == filter.ProductAreaId &&
+                    filter.SprintNumbers.Contains(i.Sprint!.SprintNumber))
+                .GroupBy(i => new
+                {
+                    i.SprintId,
+                    i.Sprint!.SprintNumber
+                })
+                .Select(g => new QAIterationPerformanceDto
+                {
+                    SprintId = g.Key.SprintId,
+                    SprintNumber = g.Key.SprintNumber,
+                    Iteration0 = g.Sum(i => i.Iteration0 ?? 0),
+                    Iteration1 = g.Sum(i => i.Iteration1 ?? 0),
+                    Iteration2 = g.Sum(i => i.Iteration2 ?? 0),
+                    Others = g.Sum(i => i.Others ?? 0)
+                })
+                .OrderBy(x => x.SprintNumber)
+                .ToListAsync();
+        }
     }
 }

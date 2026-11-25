@@ -9,9 +9,11 @@
         public int SprintId { get; set; }
 
         public int SprintNumber { get; set; }
+        public int ProductAreaId { get; set; }
 
         public int ActualVelocity { get; set; }
 
         public int Headcount { get; set; }
+        public string? Dip1Headcount { get; set; }
     }
 }

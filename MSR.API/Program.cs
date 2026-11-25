@@ -39,6 +39,7 @@ builder.Services.AddScoped<IExcelReaderService, ExcelReaderService>();
 builder.Services.AddScoped<ISprintPerformanceImportService, SprintPerformanceImportService>();
 builder.Services.AddScoped<IQAPerformanceImportService, QAPerformanceImportService>();
 builder.Services.AddScoped<IQADailyDeliveryImportService, QADailyDeliveryImportService>();
+builder.Services.AddScoped<IIterationImportService, IterationImportService>();
 builder.Services.AddScoped<IFeatureReleaseImportService, FeatureReleaseImportService>();
 builder.Services.AddScoped<IServiceNowTicketImportService, ServiceNowTicketImportService>();
 

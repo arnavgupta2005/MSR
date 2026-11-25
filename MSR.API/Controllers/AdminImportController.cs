@@ -177,20 +177,24 @@ public class AdminImportController : ControllerBase
 
     // ---- Excel template downloads ----
 
-    // Exact Sprint Performance columns expected by the importer (21 columns, in order).
+    // Exact Sprint Performance columns expected by the importer (26 columns, in order).
     private static readonly string[] SprintPerformanceTemplateHeaders =
     {
         "Sprint", "Team Name", "Name", "Working Days", "Holidays", "Assigned Points",
         "Sprint Days", "Leaves", "Planned Items", "Delivered Items", "User Stories",
         "Bugs", "Rollover Points", "Rollovers", "Delivered Points", "Capacity",
-        "Ideal Story Points", "Product", "Velocity", "Actual Velocity", "Trailing Velocity"
+        "Ideal Story Points", "Product", "Velocity", "Actual Velocity", "Trailing Velocity",
+        "Dip1(headcount)", "Dip2(Completion)", "Dip3(Rollovers)",
+        "Dip4(planned items/Delivered Items)", "Dip5(Assigned/Delivered Points/Velocity)"
     };
 
-    // Exact QA Performance columns expected by the importer (12 columns, in order).
+    // Exact QA Performance columns expected by the importer (17 columns, in order).
     private static readonly string[] QAPerformanceTemplateHeaders =
     {
         "Sprint", "Name", "Working Days", "Capacity", "Average velocity", "Assigned Points",
-        "Delivered Points", "Observations", "Rollover Points", "Rollovers", "Iterations", "Product"
+        "Delivered Points", "Observations", "Rollover Points", "Rollovers", "Iterations", "Product",
+        "Dip1(headcount)", "Dip2(Completion)", "Dip3(Rollovers)",
+        "Dip4(planned items/Delivered Items)", "Dip5(Assigned/Delivered Points/Velocity)"
     };
 
     // Feature Release columns expected by the importer (required + optional, in order).

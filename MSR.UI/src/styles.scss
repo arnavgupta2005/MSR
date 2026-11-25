@@ -167,6 +167,118 @@ button {
   .pbi-dot { width: 7px; height: 7px; }
 }
 
+.pbi-dip {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.pbi-dip-toggle,
+.pbi-dip-expand-toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pbi-dip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: #475569;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pbi-dip-popover {
+  display: none;
+  margin-top: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #f8fafc;
+  width: 100%;
+}
+
+.pbi-dip-toggle:checked + .pbi-dip-icon + .pbi-dip-popover {
+  display: block;
+}
+
+.pbi-dip-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.pbi-dip-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0f2545;
+}
+
+.pbi-dip-expand {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.pbi-dip-expand::before,
+.pbi-dip-expand::after {
+  content: '';
+  position: absolute;
+  background: #64748b;
+}
+
+.pbi-dip-expand::before {
+  width: 6px;
+  height: 1px;
+  top: 6px;
+  left: 3px;
+}
+
+.pbi-dip-expand::after {
+  width: 1px;
+  height: 6px;
+  top: 3px;
+  left: 6px;
+}
+
+.pbi-dip-expand-toggle:checked + .pbi-dip-expand::after {
+  display: none;
+}
+
+.pbi-dip-content {
+  font-size: 11px;
+  color: #334155;
+  max-height: 42px;
+  overflow: hidden;
+}
+
+.pbi-dip-expand-toggle:checked + .pbi-dip-expand + .pbi-dip-content {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.pbi-dip-entry + .pbi-dip-entry {
+  margin-top: 4px;
+}
+
+.pbi-dip-product {
+  font-weight: 700;
+  color: #0f2545;
+  margin-right: 4px;
+}
+
 // ============================================================
 // Reusable admin import UI: buttons, alerts, chips, tables.
 // ============================================================

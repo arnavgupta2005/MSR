@@ -35,6 +35,7 @@ export interface RolloverTrend {
 export interface ProductTrend {
   sprintId: number;
   sprintNumber: number;
+  productAreaId: number;
   velocity: number;
   assignedPoints: number;
   deliveredPoints: number;
@@ -42,6 +43,9 @@ export interface ProductTrend {
   deliveredItems: number;
   rollovers: number;
   rolloverPoints: number;
+  dip3Rollovers: string | null;
+  dip4PlannedItemsDeliveredItems: string | null;
+  dip5AssignedDeliveredPointsVelocity: string | null;
 }
 
 export interface TeamRolloverTrend {
@@ -68,8 +72,10 @@ export interface TeamVelocityHeadcount {
   teamName: string;
   sprintId: number;
   sprintNumber: number;
+  productAreaId: number;
   actualVelocity: number;
   headcount: number;
+  dip1Headcount: string | null;
 }
 
 export interface TeamCompletionTrend {
@@ -77,9 +83,11 @@ export interface TeamCompletionTrend {
   teamName: string;
   sprintId: number;
   sprintNumber: number;
+  productAreaId: number;
   assignedPoints: number;
   deliveredPoints: number;
   completionPercentage: number;
+  dip2Completion: string | null;
 }
 
 export interface ResourceVelocityTrend {

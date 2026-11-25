@@ -26,6 +26,11 @@ namespace MSR.API.Services
         private const string ColTeam = "team name";
         private const string ColName = "name";
         private const string ColProduct = "product";
+        private const string ColDip1 = "dip1(headcount)";
+        private const string ColDip2 = "dip2(completion)";
+        private const string ColDip3 = "dip3(rollovers)";
+        private const string ColDip4 = "dip4(planned items/delivered items)";
+        private const string ColDip5 = "dip5(assigned/delivered points/velocity)";
 
         // ---- Integer metric columns: canonical header, display name, setter ----
         private static readonly (string Canonical, string Display, Action<SprintPerformance, int> Set)[] IntColumns =
@@ -52,6 +57,16 @@ namespace MSR.API.Services
         {
             ("actual velocity", "Actual Velocity", (e, v) => e.ActualVelocity = v),
             ("trailing velocity", "Trailing Velocity", (e, v) => e.TrailingVelocity = v),
+        };
+
+        // ---- Optional DIP text columns: canonical header, display name, setter ----
+        private static readonly (string Canonical, string Display, Action<SprintPerformance, string?> Set)[] DipColumns =
+        {
+            (ColDip1, "Dip1(headcount)", (e, v) => e.Dip1Headcount = v),
+            (ColDip2, "Dip2(Completion)", (e, v) => e.Dip2Completion = v),
+            (ColDip3, "Dip3(Rollovers)", (e, v) => e.Dip3Rollovers = v),
+            (ColDip4, "Dip4(planned items/Delivered Items)", (e, v) => e.Dip4PlannedItemsDeliveredItems = v),
+            (ColDip5, "Dip5(Assigned/Delivered Points/Velocity)", (e, v) => e.Dip5AssignedDeliveredPointsVelocity = v),
         };
 
         public async Task<ImportPreviewDto> ValidateAsync(Stream stream, string fileName)
@@ -193,6 +208,7 @@ namespace MSR.API.Services
             };
             expected.AddRange(IntColumns.Select(c => (c.Canonical, c.Display)));
             expected.AddRange(DecimalColumns.Select(c => (c.Canonical, c.Display)));
+            expected.AddRange(DipColumns.Select(c => (c.Canonical, c.Display)));
 
             var missing = expected
                 .Where(c => !present.Contains(c.Canonical))
@@ -285,6 +301,20 @@ namespace MSR.API.Services
             var team = ResolveTeam(row.Get(ColTeam), master, result.Errors);
             var product = ResolveProduct(row.Get(ColProduct), master, result.Errors);
             var employee = ResolveEmployee(row.Get(ColName), team, master, result.Errors);
+
+            // DIP values are sprint-scoped: capture once from the first row seen
+            // for a sprint and reuse for every row of that sprint.
+            if (sprint is not null)
+            {
+                var sprintDipKey = GetSprintDipKey(sprint);
+                if (!master.SprintDipValuesByKey.TryGetValue(sprintDipKey, out var dipValues))
+                {
+                    dipValues = DipValues.FromRow(row);
+                    master.SprintDipValuesByKey[sprintDipKey] = dipValues;
+                }
+
+                dipValues.ApplyTo(entity);
+            }
 
             if (result.Errors.Count > 0)
             {
@@ -538,6 +568,7 @@ namespace MSR.API.Services
             return true;
         }
 
+
         private static void ApplyCounts(ImportPreviewDto preview)
         {
             preview.TotalRows = preview.Rows.Count;
@@ -553,6 +584,38 @@ namespace MSR.API.Services
             result.InvalidRows = result.Rows.Count(r => r.Status == ImportRowStatus.Invalid);
         }
 
+        private static string GetSprintDipKey(Sprint sprint)
+            => sprint.SprintId != 0
+                ? sprint.SprintId.ToString(CultureInfo.InvariantCulture)
+                : "new:" + sprint.SprintNumber.ToString(CultureInfo.InvariantCulture);
+
+        private sealed class DipValues
+        {
+            public string? Dip1Headcount { get; init; }
+            public string? Dip2Completion { get; init; }
+            public string? Dip3Rollovers { get; init; }
+            public string? Dip4PlannedItemsDeliveredItems { get; init; }
+            public string? Dip5AssignedDeliveredPointsVelocity { get; init; }
+
+            public static DipValues FromRow(ExcelRow row) => new()
+            {
+                Dip1Headcount = row.Get(ColDip1),
+                Dip2Completion = row.Get(ColDip2),
+                Dip3Rollovers = row.Get(ColDip3),
+                Dip4PlannedItemsDeliveredItems = row.Get(ColDip4),
+                Dip5AssignedDeliveredPointsVelocity = row.Get(ColDip5),
+            };
+
+            public void ApplyTo(SprintPerformance entity)
+            {
+                entity.Dip1Headcount = Dip1Headcount;
+                entity.Dip2Completion = Dip2Completion;
+                entity.Dip3Rollovers = Dip3Rollovers;
+                entity.Dip4PlannedItemsDeliveredItems = Dip4PlannedItemsDeliveredItems;
+                entity.Dip5AssignedDeliveredPointsVelocity = Dip5AssignedDeliveredPointsVelocity;
+            }
+        }
+
         private sealed class MasterData
         {
             public Dictionary<int, Sprint> SprintByNumber { get; init; } = new();
@@ -564,6 +627,7 @@ namespace MSR.API.Services
             public Dictionary<string, Team> NewTeamsByName { get; init; } = new();
             public Dictionary<(string, string), Employee> NewEmployeesByKey { get; init; } = new();
             public HashSet<(int, int, int, int)> ExistingKeys { get; init; } = new();
+            public Dictionary<string, DipValues> SprintDipValuesByKey { get; init; } = new();
 
             public static MasterData Empty => new();
         }

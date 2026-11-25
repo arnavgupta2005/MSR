@@ -9,11 +9,13 @@
         public int SprintId { get; set; }
 
         public int SprintNumber { get; set; }
+        public int ProductAreaId { get; set; }
 
         public int AssignedPoints { get; set; }
 
         public int DeliveredPoints { get; set; }
 
         public double CompletionPercentage { get; set; }
+        public string? Dip2Completion { get; set; }
     }
 }

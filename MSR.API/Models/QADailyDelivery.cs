@@ -7,7 +7,7 @@ namespace MSR.API.Models
         [Key]
         public int QADailyDeliveryId { get; set; }
 
-        public int SprintId { get; set; }
+        public int SprintId { get; set; }w2
 
         public int ProductAreaId { get; set; }
 

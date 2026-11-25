@@ -85,6 +85,13 @@ export class QaDashboardComponent implements OnInit, OnDestroy {
   headcountTrend: ChartVm = { state: 'loading', options: null };
   storyPoints: ChartVm = { state: 'loading', options: null };
   delivery: ChartVm = { state: 'loading', options: null };
+
+  get selectedProductNames(): string {
+    return this.products
+      .filter(product => this.selectedProductIds.includes(product.id))
+      .map(product => product.name)
+      .join(', ');
+  }
   /** Internal-scroll min height for the story-points stacked bars (0 = no scroll). */
   storyPointsMinHeight = 0;
   /** Natural (unscrolled) height of the story-points stacked bars. */

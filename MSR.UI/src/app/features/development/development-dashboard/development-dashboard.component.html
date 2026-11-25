@@ -103,35 +103,35 @@
       <div id="chart-headcount" class="span-12">
         <app-chart-card class="span-12" [index]="1" title="Headcount Trends Across Sprints"
           [state]="headcountTrend.state" [options]="headcountTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
+          [viewEnabled]="true" [exportContext]="selectedProductNames" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
 
       <!-- 2. Completion % Trends Across Sprints -->
       <div id="chart-completion" class="span-12">
         <app-chart-card class="span-12" [index]="2" title="Completion % Trends Across Sprints"
           [state]="completionTrend.state" [options]="completionTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
+          [viewEnabled]="true" [exportContext]="selectedProductNames" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
 
       <!-- 3. Rollovers vs Rollover Points Across Sprints -->
       <div id="chart-rollovers" class="span-12">
         <app-chart-card class="span-12" [index]="3" title="Rollovers vs Rollover Points Across Sprints"
           [state]="rolloverRolloverPointsTrend.state" [options]="rolloverRolloverPointsTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
+          [viewEnabled]="true" [exportContext]="selectedProductNames" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
 
       <!-- 4. Velocity vs Assigned Points vs Delivered Points -->
       <div id="chart-velocity" class="span-12">
         <app-chart-card class="span-12" [index]="4" title="Velocity vs Assigned Points vs Delivered Points Across Sprints"
           [state]="velocityAssignedDeliveredTrend.state" [options]="velocityAssignedDeliveredTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
+          [viewEnabled]="true" [exportContext]="selectedProductNames" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
 
       <!-- 5. Planned Items vs Delivered Items Across Sprints -->
       <div id="chart-planned" class="span-12">
         <app-chart-card class="span-12" [index]="5" title="Planned Items vs Delivered Items Across Sprints"
           [state]="plannedDeliveredItemsTrend.state" [options]="plannedDeliveredItemsTrend.options" [chartHeight]="260"
-          [viewEnabled]="true" (retry)="loadKpiCharts()"></app-chart-card>
+          [viewEnabled]="true" [exportContext]="selectedProductNames" (retry)="loadKpiCharts()"></app-chart-card>
       </div>
     </div>
   </app-dashboard-section>
@@ -151,42 +151,47 @@
       <!-- Promoted: Delivered Points vs Head Count -->
       <app-chart-panel-grid class="span-12" [index]="1" title="Delivered Points vs Head Count"
         [state]="velocityHeadcount.state" [panels]="velocityHeadcount.panels" [legend]="velocityHeadcount.legend"
-        [panelMinWidth]="260" [horizontal]="true" [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="260" [horizontal]="true" [viewEnabled]="true" [exportContext]="selectedProductNames"
+        (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
 
       <!-- Promoted: Resource Wise Actual vs Trailing Velocity Trends -->
       <app-chart-panel-grid class="span-12" [index]="2" title="Resource Wise Actual vs Trailing Velocity Trends"
         [state]="resourceVelocity.state" [panels]="resourceVelocity.panels" [legend]="resourceVelocity.legend"
-        [panelMinWidth]="220" [horizontal]="true" [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="220" [horizontal]="true" [viewEnabled]="true" [exportContext]="selectedProductNames"
+        (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
 
       <!-- 8. Velocity Trends Across Sprints -->
       <app-chart-card class="span-12" [index]="8" title="Velocity Trends Across Sprints"
         [state]="velocity.state" [options]="velocity.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-card>
+        [viewEnabled]="true" [exportContext]="selectedProductNames" (retry)="loadPerformanceCharts()"></app-chart-card>
 
       <!-- 9. Rollovers Trends Across Sprints -->
       <app-chart-card class="span-12" [index]="9" title="Rollovers Trends Across Sprints"
         [state]="rollover.state" [options]="rollover.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-card>
+        [viewEnabled]="true" [exportContext]="selectedProductNames" (retry)="loadPerformanceCharts()"></app-chart-card>
 
       <!-- 10. Team wise Actual vs Trailing Velocity (full width, 2x2 horizontal) -->
       <app-chart-panel-grid class="span-12" [index]="10" title="Team wise Actual vs Trailing Velocity"
         [state]="teamVelocity.state" [panels]="teamVelocity.panels" [legend]="teamVelocity.legend"
-        [panelMinWidth]="240" [horizontal]="true" [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="240" [horizontal]="true" [viewEnabled]="true" [exportContext]="selectedProductNames"
+        (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
 
       <!-- 11. Team wise Committed vs Completed in Completion % (full width) -->
       <app-chart-panel-grid class="span-12" [index]="11" title="Team wise Committed vs Completed in Completion %"
         [state]="teamCompletion.state" [panels]="teamCompletion.panels" [legend]="teamCompletion.legend"
-        [panelMinWidth]="260" [horizontal]="true" [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
+        [panelMinWidth]="260" [horizontal]="true" [viewEnabled]="true" [exportContext]="selectedProductNames"
+        (retry)="loadPerformanceCharts()"></app-chart-panel-grid>
 
       <!-- 12. Team wise Rollovers Trends Across Sprints (full width) -->
       <app-chart-card class="span-12" [index]="12" title="Team wise Rollovers Trends Across Sprints"
         [state]="teamRollover.state" [options]="teamRollover.options" [chartHeight]="260"
-        [viewEnabled]="true" (retry)="loadPerformanceCharts()"></app-chart-card>
+        [viewEnabled]="true" [exportContext]="selectedProductNames" (retry)="loadPerformanceCharts()"></app-chart-card>
 
       <!-- 13. Resource Completion Trends -->
       <app-chart-panel-grid class="span-12" [index]="13" title="Resource Completion Trends"
         [state]="resourceCompletion.state" [panels]="resourceCompletion.panels" [legend]="resourceCompletion.legend"
         [panelMinWidth]="280" [horizontal]="true" [viewEnabled]="true"
+        [exportContext]="selectedProductNames"
         (retry)="loadPerformanceCharts()">
         <div filter class="resource-team-filter" *ngIf="resourceCompletionTeams.length">
           <label for="resource-completion-team">Team</label>

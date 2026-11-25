@@ -134,6 +134,7 @@ export class ChartCardComponent {
   /** When > 0, enables internal vertical scroll and fixes the inner chart height (px). */
   @Input() scrollMinHeight = 0;
   @Input() viewEnabled = false;
+  @Input() exportContext = '';
 
   private readonly chartExport = inject(ChartExportService);
   exporting = false;
@@ -168,7 +169,8 @@ export class ChartCardComponent {
     try {
       const image = await this.chartComponent.dataURI({ scale: 2 });
       if (!image || !('imgURI' in image)) { throw new Error('Chart image unavailable'); }
-      await firstValueFrom(this.chartExport.exportPdf(this.title, image.imgURI));
+      const exportTitle = this.exportContext ? `${this.exportContext} - ${this.title}` : this.title;
+      await firstValueFrom(this.chartExport.exportPdf(exportTitle, image.imgURI));
     } catch {
       this.exportError = true;
     } finally {

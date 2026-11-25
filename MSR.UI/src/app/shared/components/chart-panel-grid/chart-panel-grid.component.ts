@@ -111,6 +111,7 @@ export class ChartPanelGridComponent {
   @Input() horizontal = false;
   @Input() emptyMessage = 'No data available for the selected range.';
   @Input() viewEnabled = false;
+  @Input() exportContext = '';
   @Output() retry = new EventEmitter<void>();
 
   private readonly chartExport = inject(ChartExportService);
@@ -143,7 +144,8 @@ export class ChartPanelGridComponent {
     try {
       const image = await chart.dataURI({ scale: 2 });
       if (!image || !('imgURI' in image)) { throw new Error('Chart image unavailable'); }
-      await firstValueFrom(this.chartExport.exportPdf(panel.title, image.imgURI));
+      const exportTitle = [this.exportContext, this.title, panel.title].filter(Boolean).join(' - ');
+      await firstValueFrom(this.chartExport.exportPdf(exportTitle, image.imgURI));
     } catch {
       this.exportErrorPanel = panel;
     } finally {

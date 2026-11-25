@@ -49,15 +49,30 @@ public class ChartExportController : ControllerBase
         using (var chartImage = XImage.FromStream(() => new MemoryStream(imageBytes)))
         {
             var margin = 28d;
+            var titleHeight = 36d;
+            var chartTop = margin + titleHeight;
             var availableWidth = page.Width.Point - margin * 2;
-            var availableHeight = page.Height.Point - margin * 2;
+            var availableHeight = page.Height.Point - chartTop - margin;
             var scale = Math.Min(availableWidth / chartImage.PixelWidth, availableHeight / chartImage.PixelHeight);
             var width = chartImage.PixelWidth * scale;
             var height = chartImage.PixelHeight * scale;
             var x = (page.Width.Point - width) / 2;
-            var y = (page.Height.Point - height) / 2;
+            var y = chartTop + (availableHeight - height) / 2;
 
             using var graphics = XGraphics.FromPdfPage(page);
+            var fontSize = 16d;
+            var titleFont = new XFont("Arial", fontSize, XFontStyle.Bold);
+            while (graphics.MeasureString(request.Title, titleFont).Width > availableWidth && fontSize > 8)
+            {
+                fontSize--;
+                titleFont = new XFont("Arial", fontSize, XFontStyle.Bold);
+            }
+            graphics.DrawString(
+                request.Title,
+                titleFont,
+                XBrushes.Black,
+                new XRect(margin, margin / 2, availableWidth, titleHeight),
+                XStringFormats.CenterLeft);
             graphics.DrawImage(chartImage, x, y, width, height);
         }
 

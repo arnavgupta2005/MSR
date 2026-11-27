@@ -108,8 +108,6 @@ export function powerBiTooltip(options: {
         return `<div class="${wrapClass}">${header}${rows}</div>`;
       }
 
-      const toggleId = `dip-${w.globals.chartID}-${dataPointIndex}`.replace(/[^a-zA-Z0-9-_]/g, '');
-      const expandId = `${toggleId}-expand`;
       const dipRows = dipEntries
         .map(entry => `
           <div class="pbi-dip-entry">
@@ -120,15 +118,8 @@ export function powerBiTooltip(options: {
 
       const dipSection = `
         <div class="pbi-dip">
-          <input id="${toggleId}" class="pbi-dip-toggle" type="checkbox">
-          <label for="${toggleId}" class="pbi-dip-icon" title="View DIP reason" aria-label="View DIP reason">ⓘ</label>
-          <div class="pbi-dip-popover">
-            <div class="pbi-dip-title-row">
-              <span class="pbi-dip-title">DIP</span>
-              <input id="${expandId}" class="pbi-dip-expand-toggle" type="checkbox">
-              <label for="${expandId}" class="pbi-dip-expand" title="Expand/collapse DIP text" aria-label="Expand or collapse DIP text"></label>
-            </div>
-            <div class="pbi-dip-content">${dipRows}</div>
+          <div class="pbi-dip-popover pbi-dip-popover-inline">
+            <div class="pbi-dip-content pbi-dip-content-inline">${dipRows}</div>
           </div>
         </div>`;
 

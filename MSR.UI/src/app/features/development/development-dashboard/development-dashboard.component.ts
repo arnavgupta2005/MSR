@@ -341,15 +341,15 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
 
       const sorted = [...aggregatedRows].sort((a, b) => a.sprintNumber - b.sprintNumber);
       const categories = sorted.map(row => `Sprint ${row.sprintNumber}`);
-      const dip3BySprint = this.buildDipBySprint(
+      const dip3BySprint = this.buildCombinedDipBySprint(
         flatRows,
         row => row.dip3Rollovers
       );
-      const dip4BySprint = this.buildDipBySprint(
+      const dip4BySprint = this.buildCombinedDipBySprint(
         flatRows,
         row => row.dip4PlannedItemsDeliveredItems
       );
-      const dip5BySprint = this.buildDipBySprint(
+      const dip5BySprint = this.buildCombinedDipBySprint(
         flatRows,
         row => row.dip5AssignedDeliveredPointsVelocity
       );
@@ -426,7 +426,7 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
         return;
       }
       const sorted = [...aggregatedRows].sort((a, b) => a.sprintNumber - b.sprintNumber);
-      const dip1BySprint = this.buildDipBySprint(
+      const dip1BySprint = this.buildCombinedDipBySprint(
         flatRows,
         row => row.dip1Headcount
       );
@@ -466,7 +466,7 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
         return;
       }
       const sorted = [...aggregatedRows].sort((a, b) => a.sprintNumber - b.sprintNumber);
-      const dip2BySprint = this.buildDipBySprint(
+      const dip2BySprint = this.buildCombinedDipBySprint(
         flatRows,
         row => row.dip2Completion
       );
@@ -897,6 +897,36 @@ export class DevelopmentDashboardComponent implements OnInit, OnDestroy {
           value
         }))
         .sort((a, b) => a.product.localeCompare(b.product));
+    }
+
+    return result;
+  }
+
+  private buildCombinedDipBySprint<T extends SprintDipRow>(
+    rows: T[],
+    dipSelector: (row: T) => string | null | undefined
+  ): Record<string, DipTooltipEntry[]> {
+    const dipBySprint = this.buildDipBySprint(rows, dipSelector);
+    const result: Record<string, DipTooltipEntry[]> = {};
+
+    for (const [sprintKey, entries] of Object.entries(dipBySprint)) {
+      const seen = new Set<string>();
+      const reasons: string[] = [];
+
+      for (const entry of entries) {
+        const reason = entry.value.trim();
+        if (reason.length === 0 || seen.has(reason)) {
+          continue;
+        }
+        seen.add(reason);
+        reasons.push(reason);
+      }
+
+      if (reasons.length === 0) {
+        continue;
+      }
+
+      result[sprintKey] = [{ product: 'Reason', value: reasons.join(', ') }];
     }
 
     return result;

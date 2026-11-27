@@ -205,6 +205,10 @@ button {
   width: 100%;
 }
 
+.pbi-dip-popover-inline {
+  display: block;
+}
+
 .pbi-dip-toggle:checked + .pbi-dip-icon + .pbi-dip-popover {
   display: block;
 }
@@ -262,6 +266,11 @@ button {
   color: #334155;
   max-height: 42px;
   overflow: hidden;
+}
+
+.pbi-dip-content-inline {
+  max-height: none;
+  overflow: visible;
 }
 
 .pbi-dip-expand-toggle:checked + .pbi-dip-expand + .pbi-dip-content {
